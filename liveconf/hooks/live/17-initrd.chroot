@@ -1,0 +1,13 @@
+#!/bin/sh
+
+echo I: Create initrd if it does not exist.
+
+# Kernel could complain about non available nls_ascii module when booting from USB pendrive
+echo "nls_ascii" >> /etc/initramfs-tools/modules
+
+if [ -e /boot/initrd.img-* ]; then
+  rm -f /boot/initrd.img-*
+fi
+
+update-initramfs -c -k `ls /boot | grep vmlinuz- | sed 's/vmlinuz-//g'`
+

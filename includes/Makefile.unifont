@@ -1,0 +1,9 @@
+UNIFONTREL=unifont-13.0.06
+UNIFONT=$(UNIFONTREL).ttf
+WGETURL_$(UNIFONT)=http://unifoundry.com/pub/unifont/$(UNIFONTREL)/font-builds/$(UNIFONT)
+UNIFONTDEST=$(SRCDIR)/$(UNIFONT)
+export UNIFONTDEST
+
+PREREQS += $(UNIFONTDEST)
+
+

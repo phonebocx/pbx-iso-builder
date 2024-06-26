@@ -1,0 +1,23 @@
+TOOLS += pecl debuild xsltproc
+PKG_pecl = php-dev
+PKG_debuild = devscripts
+
+OPENSWOOLE=22.1.2
+SWOOLEDPKG=php-openswoole_$(OPENSWOOLE)-1_amd64.deb
+SWOOLESRCDEB=$(SRCDIR)/$(SWOOLEDPKG)
+SWOOLEDEST=$(shell pwd)/debs/$(SWOOLEDPKG)
+export OPENSWOOLE SWOOLEDPKG SWOOLEDEST
+
+PREREQS += $(SWOOLEDEST)
+
+swoole:
+	rm -f $(SWOOLSRCDEB) $(SWOOLEDEST)
+	$(MAKE) $(SWOOLEDEST)
+	@echo "I have built $(SWOOLEDEST)"
+
+$(SWOOLESRCDEB):
+	./create-openswoole-deb.sh
+
+$(SWOOLEDEST): $(SWOOLESRCDEB)
+	cp $< $@
+

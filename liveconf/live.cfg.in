@@ -1,0 +1,18 @@
+label live-@FLAVOUR@-destruct
+	menu label ^Live (Auto-wipe of /dev/mmcblk1 if needed)
+	menu default
+	linux @LINUX@
+	initrd @INITRD@
+	append @APPEND_LIVE@ wipeall
+
+label live-@FLAVOUR@
+	menu label ^Live (Default)
+	linux @LINUX@
+	initrd @INITRD@
+	append @APPEND_LIVE@
+
+label live-@FLAVOUR@-failsafe
+	menu label ^Live (Failsafe)
+	linux @LINUX@
+	initrd @INITRD@
+	append @APPEND_LIVE_FAILSAFE@

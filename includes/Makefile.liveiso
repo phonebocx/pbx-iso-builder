@@ -1,0 +1,10 @@
+DEBMIRROR=http://mirror.aarnet.edu.au/debian/
+LIVECONF=$(shell pwd)/liveconf
+export DEBMIRROR LIVECONF
+
+.PHONY: livebuild
+livebuild: setup
+	./build-live-iso.sh
+
+
+
