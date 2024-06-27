@@ -1,0 +1,11 @@
+Package: dahdi-tools
+Version: __TOOLSVER__-__TOOLSREL__
+Section: base
+Priority: optional
+Architecture: amd64
+Depends: procps, usbutils
+Vcs-Browser: https://github.com/phonebocx/dahdi-tools.git
+Maintainer: Rob Thomas <xrobau@gmail.com>
+Description: PhoneBo.cx release of dahdi-tools.
+  This has been repackaged and patched.
+

@@ -46,10 +46,17 @@ for x in /usr/share/live/build/bootloaders/*; do
 	rsync -a $x config/bootloaders
 done
 
-# Put our splash in place to replace the original
+# Changes to default bootloader configs are in liveconf.
+#  syslinux_common/live.cfg.in main menu
+#  syslinux_common/menu.cfg Removed ^G beep
+#  grub-pc/grub.cfg Adds set timeout=5
+#  grub-pc/config.cfg changes gfxmode=auto to gfxmode=1024x768x32 and disables the beep
+
+# Put our splash in place, which is updated on every build
 cp ${SPLASHSVG} config/bootloaders/syslinux_common/splash.svg
 
-# Merge anything we've put in liveconf across
+# Merge anything we've put in liveconf across, which also overwrites
+# some of the bootloader config files
 rsync -av ${LIVECONF}/ config/
 
 # Put our kernel debs in place
@@ -66,12 +73,6 @@ mkdir -p config/includes.chroot/usr/share/fonts/truetype/
 cp $UF config/includes.chroot/usr/share/fonts/truetype/
 
 #lb build 2>&1 | tee build.log
-sed -i "s/Live system/PhoneBo.cx ($BUILD)/" config/bootloaders/*/live.cfg.in
-sed -i '2 i set timeout=5' config/bootloaders/grub-pc/grub.cfg
-sed -i 's/gfxmode=auto/gfxmode=1024x768x32/' config/bootloaders/grub-pc/*.cfg
-
-# Disable beep.
-set -i 's/^play/#play/g' config/bootloaders/grub-pc/*.cfg
 
 lb build 2>&1 | tee build.log
 

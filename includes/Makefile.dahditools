@@ -1,0 +1,51 @@
+DTOOLSVER=3.4.0
+DTOOLSREL=1
+DTOOLSBRANCH=sgm
+
+GITSRC_dahdi-tools=git@github.com:phonebocx/dahdi-tools.git
+GITBRANCH_dahdi-tools=$(DTOOLSBRANCH)
+
+DTOOLSDEBNAME=dahdi-tools_$(DTOOLSVER)-$(DTOOLSREL)_amd64.deb
+DTOOLSDEB=$(DEBDEST)/$(DTOOLSDEBNAME)
+DTSROOT=$(SRCDIR)/dahdi-tools
+BUILDROOT=$(SRCDIR)/dt-buildroot
+MKDIRS += $(BUILDROOT)
+
+PREREQS += $(DTOOLSDEB)
+
+dt: $(DTSROOT)/.git
+	@echo Hi DT
+	@echo make $(DTOOLSDEB)
+
+# dahdi-tools is a hacky package, it's built manually and then just wrapped up
+# into a deb using dpkg-deb
+$(DTOOLSDEB): $(BUILDROOT)/usr/sbin/dahdi_cfg $(BUILDROOT)/DEBIAN/control
+	cd $(BUILDROOT)/.. && dpkg-deb --build $(BUILDROOT) $@
+
+# Run autoreconf (pulling from git if not already done), as
+# well as hackily pulling in dahdi-linux headers from the
+# includes/Makefile.dahdilinux shim
+$(DTSROOT)/aclocal.m4: | $(DTSROOT)/.git $(DLHEADERDEST)
+	cd $(DTSROOT) && autoreconf -i
+
+# Run configure after autoreconf
+$(DTSROOT)/Makefile: | $(DTSROOT)/aclocal.m4
+	cd $(DTSROOT) && ./configure
+
+# Patch the xpp/xtalk Makefile to remove a warning I don't care aout
+$(DTSROOT)/xpp/xtalk/Makefile.patched: $(DTSROOT)/xpp/xtalk/Makefile
+	sed -i '/Werror/d' $< && touch $@
+
+# Compile dahdi-tools once everything is prepared
+$(DTSROOT)/dahdi_cfg: $(DTSROOT)/Makefile | $(DTSROOT)/xpp/xtalk/Makefile.patched
+	cd $(DTSROOT) && make
+
+# Install the compiled package to the buildroot
+$(BUILDROOT)/usr/sbin/dahdi_cfg: $(DTSROOT)/dahdi_cfg
+	cd $(DTSROOT) && make DESTDIR=$(BUILDROOT) install
+
+# Finally, create the control file once it's installed. This is the last
+# part of the chain of DTOOLSDEB requirements.
+$(BUILDROOT)/DEBIAN/control: dahdi-tools.control $(BUILDROOT)/usr/sbin/dahdi_cfg
+	mkdir -p $(@D)
+	sed -e 's/__TOOLSVER__/$(DTOOLSVER)/' -e 's/__TOOLSREL__/$(DTOOLSREL)/' < dahdi-tools.control > $@

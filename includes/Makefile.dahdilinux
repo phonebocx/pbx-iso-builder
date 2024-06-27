@@ -1,0 +1,25 @@
+# Temporary workaround to pull in dahdi-linux headers to the local
+# machine building dahdi-tools
+GITSRC_dahdi-linux=git@github.com:phonebocx/dahdi-linux.git
+GITBRANCH_dahdi-linux=sgm
+DLSRC=$(SRCDIR)/dahdi-linux
+DLINCDIR=$(DLSRC)/include/dahdi
+DLHEADERS=version.h dahdi_config.h fasthdlc.h kernel.h user.h wctdm_user.h
+
+DLHEADERDEST=/usr/include/dahdi
+MKDIRS =+ $(DLHEADERDEST)
+
+DLDEST=$(addprefix $(DLHEADERDEST)/,$(DLHEADERS))
+
+.PHONY: dlh
+dlh: $(DLDEST)
+	@echo 'Headers installed should be $(DLDEST)'
+
+$(DLINCDIR)/version.h: $(DLSRC)/.git
+	cd $(DLSRC) && make include/dahdi/version.h
+
+$(DLHEADERDEST)/version.h: $(DLINCDIR)/version.h
+
+$(DLHEADERDEST)/%: $(DLINCDIR)/% | $(DLHEADERDEST)
+	@cp $< $@
+
