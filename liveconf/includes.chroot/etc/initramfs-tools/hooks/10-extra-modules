@@ -1,0 +1,35 @@
+#!/bin/sh
+PREREQ=""
+prereqs()
+{
+    echo "$PREREQ"
+}
+case $1 in
+prereqs)
+    prereqs
+    exit 0
+    ;;
+esac
+. /usr/share/initramfs-tools/hook-functions
+# Begin real processing below this line
+
+# include listed modules to initramfs but not load them without the necessity
+manual_add_modules r8152
+
+# include modules from file (one per line) to initramfs but not load them without the necessity
+# add_modules_from_file /tmp/modlist
+
+# include listed modules to initramfs and load them during the boot
+force_load i2c-dev
+
+# executable to copy to initramfs, with library dependencies
+copy_exec /usr/lib/x86_64-linux-gnu/libnss_dns.so.2
+
+# missing fsck in initramfs
+copy_exec /usr/sbin/fsck
+copy_exec /usr/sbin/fsck.ext2
+copy_exec /usr/sbin/fsck.ext3
+copy_exec /usr/sbin/fsck.ext4
+
+# copy other files ("other" here is a file type, so do not delete this keyword)
+copy_file other /etc/ssl/certs/ca-certificates.crt

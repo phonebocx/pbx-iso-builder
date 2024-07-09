@@ -1,0 +1,5 @@
+#!/bin/sh
+
+echo I: Stop vim stealing the mouse
+sed -i 's/set mouse=/" set mouse=/g' /usr/share/vim/*/*.vim
+

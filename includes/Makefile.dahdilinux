@@ -7,7 +7,7 @@ DLINCDIR=$(DLSRC)/include/dahdi
 DLHEADERS=version.h dahdi_config.h fasthdlc.h kernel.h user.h wctdm_user.h
 
 DLHEADERDEST=/usr/include/dahdi
-MKDIRS =+ $(DLHEADERDEST)
+MKDIRS += $(DLHEADERDEST)
 
 DLDEST=$(addprefix $(DLHEADERDEST)/,$(DLHEADERS))
 

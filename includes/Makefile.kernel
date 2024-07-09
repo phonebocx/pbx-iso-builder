@@ -5,6 +5,8 @@ KERNELDEBNAMES=$(KERNELDEB) $(LIBCDEB) $(HEADERSDEB)
 KERNELDEBS=$(addprefix $(DEBDEST)/,$(KERNELDEBNAMES))
 GITSRC_pbx-kernel-builder=git@github.com:phonebocx/pbx-kernel-builder.git
 
+ISODEBS += $(KERNELDEBS)
+
 export KERNELDEBS
 
 PREREQS += $(KERNELDEBS)

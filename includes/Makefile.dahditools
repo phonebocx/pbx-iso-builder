@@ -11,6 +11,7 @@ DTSROOT=$(SRCDIR)/dahdi-tools
 BUILDROOT=$(SRCDIR)/dt-buildroot
 MKDIRS += $(BUILDROOT)
 
+ISODEBS += $(DTOOLSDEB)
 PREREQS += $(DTOOLSDEB)
 
 dt: $(DTSROOT)/.git
@@ -19,7 +20,7 @@ dt: $(DTSROOT)/.git
 
 # dahdi-tools is a hacky package, it's built manually and then just wrapped up
 # into a deb using dpkg-deb
-$(DTOOLSDEB): $(BUILDROOT)/usr/sbin/dahdi_cfg $(BUILDROOT)/DEBIAN/control
+$(DTOOLSDEB): $(BUILDROOT)/usr/sbin/dahdi_cfg $(BUILDROOT)/DEBIAN/control | $(DEBDEST)
 	cd $(BUILDROOT)/.. && dpkg-deb --build $(BUILDROOT) $@
 
 # Run autoreconf (pulling from git if not already done), as

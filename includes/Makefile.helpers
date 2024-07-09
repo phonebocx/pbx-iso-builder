@@ -4,5 +4,16 @@ $(SRCDIR)/%/.git src/%/.git:
 	cd $(@D) && git pull; [ "$(GITBRANCH_$*)" ] && git checkout $(GITBRANCH_$*) || git checkout master
 
 $(SRCDIR)/% src/%:
-	wget $(WGETURL_$*) -O $@; if [ ! -s $@ ]; then echo 'Could not download $@, deleting'; rm -f $@; exit 1; fi
+	@if [ "$(WGETURL_$*)" ]; then \
+		echo 'wget $(WGETURL_$*) -O $@'; \
+		wget $(WGETURL_$*) -O $@; \
+		if [ ! -s $@ ]; then \
+			echo 'Could not download $@, deleting'; \
+			rm -f $@; \
+			exit 1; \
+		fi \
+	else \
+		echo "No prereq to install $@ - Did you forget to create the download var WGETURL_$*"; \
+		exit 1; \
+	fi
 

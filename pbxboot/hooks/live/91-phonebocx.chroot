@@ -1,0 +1,26 @@
+#!/bin/bash
+
+echo I: Starting Base PhoneBocx Config
+#echo -e '\t* Remove live-config getty generator'
+#rm -f /lib/systemd/system-generators/live-config-getty-generator
+echo -e '\t* Initrd fixes'
+chmod 755 /usr/lib/live/boot/*.sh
+
+# If the PhoneBocx hook is not already in 9990-main.sh, add it after 'Swap'. At time
+# of writing, it was overwritten by liveconf/includes.chroot
+grep -q PhoneBocx /lib/live/boot/9990-main.sh || sed -i '/Swap/a PhoneBocx' /lib/live/boot/9990-main.sh
+
+echo -e '\t* Create core symlinks'
+ln -sf /usr/bin/busybox /bin/ash
+
+if [ -e /usr/sbin/a2enmod ]; then
+	echo -e '\t* Apache: Enable mod_rewrite'
+	a2enmod rewrite
+	echo -e '\t* Apache: AllowOverride all'
+	sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
+fi
+
+echo -e '\t* Add fastagi to /etc/services'
+sed -i '/fastagi/d' /etc/services
+echo 'fastagi         4573/tcp                        # Asterisk AGI' >> /etc/services
+

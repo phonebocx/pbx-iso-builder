@@ -2,8 +2,21 @@ DEBMIRROR=http://mirror.aarnet.edu.au/debian/
 LIVECONF=$(shell pwd)/liveconf
 export DEBMIRROR LIVECONF
 
-.PHONY: livebuild
-livebuild: setup
+REPOSRC=https://repo.phonebo.cx/debian/phonebocx.apt.source
+PUBKEYSRC=https://repo.phonebo.cx/phonebocx.gpg.key
+WGETURL_live.list.chroot=$(REPOSRC)
+WGETURL_phonebocx.key.chroot=$(PUBKEYSRC)
+
+PREREQS += $(SRCDIR)/live.list.chroot $(SRCDIR)/phonebocx.key.chroot
+
+.PHONY: debs
+debs:
+	@echo "Debs to be built and added to the iso are $(ISODEBS)"
+
+export ISODEBS
+
+.PHONY: iso
+iso: setup $(ISODEBS)
 	./build-live-iso.sh
 
 

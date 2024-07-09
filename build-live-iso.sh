@@ -55,13 +55,18 @@ done
 # Put our splash in place, which is updated on every build
 cp ${SPLASHSVG} config/bootloaders/syslinux_common/splash.svg
 
+# Import our additional repositories
+cp ../*.list.* ../*.key.* config/archives
+
 # Merge anything we've put in liveconf across, which also overwrites
 # some of the bootloader config files
 rsync -av ${LIVECONF}/ config/
 
-# Put our kernel debs in place
+# Put all our debs in place
 mkdir -p config/packages.chroot
-cp ${KERNELDEBS} config/packages.chroot/
+cp ${ISODEBS} config/packages.chroot/
+echo "Debs to be injected onto iso:"
+ls -l config/packages.chroot/
 
 UF=${UNIFONTDEST}
 if [ ! -e $UF ]; then
@@ -72,9 +77,8 @@ fi
 mkdir -p config/includes.chroot/usr/share/fonts/truetype/
 cp $UF config/includes.chroot/usr/share/fonts/truetype/
 
-#lb build 2>&1 | tee build.log
+# Now merge the pbxboot directory in
+rsync -av ../../pbxboot/ config/
 
 lb build 2>&1 | tee build.log
-
-exit
 
