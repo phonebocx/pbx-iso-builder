@@ -58,6 +58,11 @@ cp ${SPLASHSVG} config/bootloaders/syslinux_common/splash.svg
 # Import our additional repositories
 cp ../*.list.* ../*.key.* config/archives
 
+# Put the phonebocx source file inplace for testing
+srcdest=config/includes.chroot/etc/apt/sources.list.d
+mkdir -p $srcdest
+cp ../phonebocx.sources $srcdest
+
 # Merge anything we've put in liveconf across, which also overwrites
 # some of the bootloader config files
 rsync -av ${LIVECONF}/ config/

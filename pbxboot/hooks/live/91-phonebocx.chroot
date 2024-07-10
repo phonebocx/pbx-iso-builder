@@ -1,8 +1,8 @@
 #!/bin/bash
 
 echo I: Starting Base PhoneBocx Config
-#echo -e '\t* Remove live-config getty generator'
-#rm -f /lib/systemd/system-generators/live-config-getty-generator
+echo -e '\t* Remove live-config getty generator'
+rm -f /lib/systemd/system-generators/live-config-getty-generator
 echo -e '\t* Initrd fixes'
 chmod 755 /usr/lib/live/boot/*.sh
 

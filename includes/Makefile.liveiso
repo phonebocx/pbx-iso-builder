@@ -4,10 +4,12 @@ export DEBMIRROR LIVECONF
 
 REPOSRC=https://repo.phonebo.cx/debian/phonebocx.apt.source
 PUBKEYSRC=https://repo.phonebo.cx/phonebocx.gpg.key
+LIVESRC=https://repo.phonebo.cx/debian/phonebocx.sources
 WGETURL_live.list.chroot=$(REPOSRC)
 WGETURL_phonebocx.key.chroot=$(PUBKEYSRC)
+WGETURL_phonebocx.sources=$(LIVESRC)
 
-PREREQS += $(SRCDIR)/live.list.chroot $(SRCDIR)/phonebocx.key.chroot
+PREREQS += $(SRCDIR)/live.list.chroot $(SRCDIR)/phonebocx.key.chroot $(SRCDIR)/phonebocx.sources
 
 .PHONY: debs
 debs:
