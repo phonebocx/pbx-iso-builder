@@ -85,5 +85,8 @@ cp $UF config/includes.chroot/usr/share/fonts/truetype/
 # Now merge the pbxboot directory in
 rsync -av ../../pbxboot/ config/
 
+# And finally the theme
+rsync -av ${THEMEDESTDIR}/ config/
+
 lb build 2>&1 | tee build.log
 
