@@ -15,7 +15,7 @@ splash:
 	rm -f $(SPLASHSVG)
 	$(MAKE) $(SPLASHPNG)
 
-$(SPLASHSVG): splashsrc.svg
+$(SPLASHSVG): $(THEMEDIR)/splashsrc.svg
 	sed -e 's/__BUILD__/$(BUILD)/' -e 's/@RELEASE@/$(RELEASE)/' -e 's/@ARCHITECTURE@/amd64/' < $< > $@
 
 $(SPLASHPNG): $(SPLASHSVG)

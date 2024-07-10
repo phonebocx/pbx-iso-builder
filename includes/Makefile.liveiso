@@ -9,7 +9,15 @@ WGETURL_live.list.chroot=$(REPOSRC)
 WGETURL_phonebocx.key.chroot=$(PUBKEYSRC)
 WGETURL_phonebocx.sources=$(LIVESRC)
 
-PREREQS += $(SRCDIR)/live.list.chroot $(SRCDIR)/phonebocx.key.chroot $(SRCDIR)/phonebocx.sources
+THEMEDESTDIR=$(SRCDIR)/themefiles
+
+# Default Themeing for the ISO
+THEMEFILES=includes.chroot/etc/motd includes.chroot/etc/phonebocxversion includes.chroot/etc/shortname
+
+# HOWEVER, if there's a Makefile in the themedir, include that. It may want to clobber things.
+include $(wildcard $(THEMEDIR)/Makefile)
+
+PREREQS += $(SRCDIR)/live.list.chroot $(SRCDIR)/phonebocx.key.chroot $(SRCDIR)/phonebocx.sources $(addprefix $(THEMEDESTDIR)/,$(THEMEFILES))
 
 .PHONY: debs
 debs:
@@ -21,5 +29,21 @@ export ISODEBS
 iso: setup $(ISODEBS)
 	./build-live-iso.sh
 
+# These are the default theme generators
+$(THEMEDESTDIR)/includes.chroot/etc/phonebocxversion: $(THEMEDIR)/distroname
+	@mkdir -p $(@D)
+	@echo "$(shell cat $<) Build $(BUILD) using $(KERNELVER) - $(shell date -R)" > $@
 
+$(THEMEDESTDIR)/includes.chroot/etc/shortname: $(THEMEDIR)/shortname
+	@mkdir -p $(@D)
+	@sed -s 's/__BUILD__/$(BUILD)/' < $< | head -1 > $@
+	@LEN=$$(cat $@ | wc -c); if [ "$$LEN" -gt 20 ]; then \
+		echo "Shortname too long. It's $$LEN, fix $<"; \
+		rm -f $@; \
+	else \
+		echo "MOTD String Length is $$LEN, all good"; \
+	fi
 
+$(THEMEDESTDIR)/includes.chroot/etc/motd: $(THEMEDESTDIR)/includes.chroot/etc/shortname $(THEMEDESTDIR)/includes.chroot/etc/phonebocxversion
+	@toilet -F metal:border -f pagga "$(shell cat $<)" > $@
+	@cat $(THEMEDESTDIR)/includes.chroot/etc/phonebocxversion >> $@

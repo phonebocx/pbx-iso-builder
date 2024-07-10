@@ -1,14 +1,18 @@
 SHELL=/bin/bash
-BRANCH=$(shell date +%Y.%m)
+ISOTHEME=default
 BUILDNUM=1
-BUILD=$(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
-SRCDIR=$(shell pwd)/src
-DEBDEST=$(shell pwd)/debs
 
 # This should match pbx-kernel-builder
 KERNELVER=6.6.25
 KERNELREL=1
-export KERNELVER KERNELREL BRANCH BUILDNUM BUILD SRCDIR
+
+BRANCH=$(shell date +%Y.%m)
+BUILD=$(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
+SRCDIR=$(shell pwd)/src
+DEBDEST=$(shell pwd)/debs
+THEMEDIR=$(shell pwd)/theme/$(ISOTHEME)
+
+export KERNELVER KERNELREL BRANCH BUILDNUM BUILD SRCDIR THEME THEMEDIR
 
 # Anything here can be automatically made by the $(MKDIRS) target below
 MKDIRS=$(SRCDIR) $(DEBDEST)
