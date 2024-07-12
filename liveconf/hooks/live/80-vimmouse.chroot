@@ -1,10 +1,10 @@
 #!/bin/sh
 
 echo I: Stop vim stealing the mouse
+# This comments out any line that tries to change the mouse. (" is a comment)
 sed -i 's/set mouse=/" set mouse=/g' /usr/share/vim/*/*.vim
 
-echo I: Fix pasting and editor
-
+echo I: Fix pasting and editor variables
 cat >> /etc/bash.bashrc << EOF
 bind 'set enable-bracketed-paste off'
 export EDITOR=vim

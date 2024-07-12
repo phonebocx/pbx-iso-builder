@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo "Default post_copy hook triggered"
+

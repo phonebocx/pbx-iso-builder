@@ -1,18 +1,25 @@
 SHELL=/bin/bash
-ISOTHEME=default
 BUILDNUM=1
 
 # This should match pbx-kernel-builder
 KERNELVER=6.6.25
 KERNELREL=1
 
+BUILDUTIME=$(shell date +%s)
 BRANCH=$(shell date +%Y.%m)
 BUILD=$(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
+PKGBUILDDIR=$(shell pwd)/packages
 SRCDIR=$(shell pwd)/src
 DEBDEST=$(shell pwd)/debs
-THEMEDIR=$(shell pwd)/theme/$(ISOTHEME)
+PKGDESTDIR=$(SRCDIR)/packages
+THEME ?= default
+THEMEDIR ?= $(shell pwd)/theme/$(THEME)
 
-export KERNELVER KERNELREL BRANCH BUILDNUM BUILD SRCDIR THEME THEMEDIR
+# This is used in liveiso to take all the vars in default, and then
+# overwrite anything provided by the non-default theme
+DEFAULTTHEMEDIR ?= $(shell pwd)/theme/default
+
+export KERNELVER KERNELREL BRANCH BUILDNUM BUILD SRCDIR THEME THEMEDIR BUILDUTIME PKGDESTDIR
 
 # Anything here can be automatically made by the $(MKDIRS) target below
 MKDIRS=$(SRCDIR) $(DEBDEST)

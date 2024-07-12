@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo "Default pre_copy hook triggered"
+

@@ -85,6 +85,11 @@ cp $UF config/includes.chroot/usr/share/fonts/truetype/
 # Now merge the pbxboot directory in
 rsync -av ../../pbxboot/ config/
 
+# The immutable packages are only in the iso, not the live image. They're
+# placed in the 'live' folder so the 9991 initram hook can find them.
+mkdir -p config/includes.binary/live
+rsync -av ../packages config/includes.binary/live
+
 # And finally the theme
 rsync -av ${THEMEDESTDIR}/ config/
 

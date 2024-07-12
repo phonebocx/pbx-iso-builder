@@ -1,3 +1,6 @@
 debs
 src
+/theme/*
+!/theme/default
+packages
 

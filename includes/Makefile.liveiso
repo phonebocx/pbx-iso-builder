@@ -1,3 +1,4 @@
+TOOLS += jq
 DEBMIRROR=http://mirror.aarnet.edu.au/debian/
 LIVECONF=$(shell pwd)/liveconf
 export DEBMIRROR LIVECONF
@@ -13,7 +14,17 @@ THEMEDESTDIR=$(SRCDIR)/themefiles
 export THEMEDESTDIR
 
 # Default Themeing for the ISO
-THEMEFILES=includes.chroot/etc/motd includes.chroot/etc/phonebocxversion includes.chroot/etc/shortname includes.chroot/etc/issue includes.chroot/etc/issue.net
+THEMEFILES=includes.chroot/etc/motd includes.chroot/etc/distroversion includes.chroot/etc/shortname \
+	includes.chroot/etc/issue includes.chroot/etc/issue.net includes.chroot/etc/distrovars.json \
+	includes.binary/etc/distrovars.json includes.binary/etc/distrovars.sh includes.chroot/etc/distrovars.sh
+
+THEMEVERSIONGEN=jq -r '"\(.distroname) Build \(.buildver) using Linux \(.kernelver)\nBuild Timestamp: \(.timestamp)\n"'
+
+# Important - to avoid namespace collisions, the package installer below
+# prepends 'immutable-' to the package name. So if you're adding more packages,
+# namespace the GITSRC correctly. Sorry.
+IMMUTABLEPACKAGES=core othercore
+GITSRC_immutable-othercore=git@github.com:phonebocx/pbxpackage-core.git
 
 # HOWEVER, if there's a Makefile in the themedir, include that. It may want to clobber things.
 include $(wildcard $(THEMEDIR)/Makefile)
@@ -22,15 +33,14 @@ THEMEDESTFILES=$(addprefix $(THEMEDESTDIR)/,$(THEMEFILES))
 
 PREREQS += $(SRCDIR)/live.list.chroot $(SRCDIR)/phonebocx.key.chroot $(SRCDIR)/phonebocx.sources $(THEMEDESTFILES)
 
+# This is added to by the kernel and dahditools includes, at time of writing.
 .PHONY: debs
 debs:
 	@echo "Debs to be built and added to the iso are $(ISODEBS)"
-
-# This is in settings
 export ISODEBS
 
 .PHONY: iso
-iso: setup $(ISODEBS)
+iso: setup $(ISODEBS) $(PKGDESTDIR)/packages.json
 	./build-live-iso.sh
 
 .PHONY: theme
@@ -39,13 +49,64 @@ theme:
 	@rm -f $(THEMEDESTFILES)
 	@$(MAKE) setup
 
-### Default theme generators
+# This copies anything found in ../packages (hardcoded package dev dir) into
+# srcdir/packages, then uses the git helper to pull anything left over that
+# is in the IMMUTABLEPACKAGES var.
+.PHONY: packages $(PKGDESTDIR)/packages.json
+packages $(PKGDESTDIR)/packages.json:
+	@echo "Theme $(THEME) uses packages '$(IMMUTABLEPACKAGES)'"
+	@rm -rf $(PKGBUILDDIR); mkdir -p $(PKGBUILDDIR)
+	@DEV="$(realpath $(wildcard ../packages/*))"; if [ "$$DEV" ]; then \
+		for devpack in $$DEV; do echo "Found Dev package $$devpack, installing to $(PKGBUILDDIR)"; \
+			rsync -a $$devpack $(PKGBUILDDIR)/; \
+			done; \
+	fi
+	@for ipack in $(IMMUTABLEPACKAGES); do if [ ! -d "$(PKGBUILDDIR)/$$ipack" ]; then \
+		echo "Installing package $$ipack"; \
+		$(MAKE) -s $(SRCDIR)/immutable-$$ipack/.git; \
+		[ -e $(SRCDIR)/immutable-$$ipack/meta/packagename ] && rsync -a $(SRCDIR)/immutable-$$ipack $(PKGBUILDDIR)/$$ipack || echo "Error - No meta/packagename in $(SRCDIR)/immutable-$$ipack, skipping"; \
+	fi; done
+	@rm -rf $(PKGBUILDDIR/*/.git* $(PKGDESTDIR)
+	./build-packages.php --force --dest=$(PKGDESTDIR)
 
-# Always rebuild this, as it has the timestamp in it.
-.PHONY: $(THEMEDESTDIR)/includes.chroot/etc/phonebocxversion
-$(THEMEDESTDIR)/includes.chroot/etc/phonebocxversion: $(THEMEDIR)/distroname
+###
+### Default theme generators. Any OTHER generators added by a theme will need to be
+### added to that themes Makefile, to stop the wget helper trying to download it
+### and failing
+###
+
+THEMEVARS=$(SRCDIR)/themevars
+# This is always run to generate the variables for this theme. It takes
+# everything from defaultvars, and then overwrites them using any variables
+# provided by the theme.
+.PHONY: $(THEMEVARS)
+$(THEMEVARS):
+	@rm -rf $@; mkdir -p $@
+	@cp $(DEFAULTTHEMEDIR)/distrovars/* $@/
+	@if [ "$(THEME)" != "default" ]; then \
+		[ -d "$(THEMEDIR)/distrovars" ] && cp $(THEMEDIR)/distrovars/* $@/; \
+	fi
+
+# Always rebuild this, as this is the base that everything else uses
+.PHONY: $(THEMEDESTDIR)/includes.chroot/etc/distrovars.json
+$(THEMEDESTDIR)/includes.chroot/etc/distrovars.json: $(THEMEDIR)/distroname $(THEMEDESTDIR)/includes.chroot/etc/shortname $(THEMEVARS)
 	@mkdir -p $(@D)
-	@echo -e "$(shell cat $<) Build $(BUILD) - Linux $(KERNELVER)\n  Build timestamp $(shell date -R)" > $@
+	@echo -n '{"kernelver":"$(KERNELVER)","buildver":"$(BUILD)",' > $@
+	@for x in $^ $(wildcard $(THEMEVARS)/*); do \
+		[ -f $$x ] && echo -n "\"$$(basename $$x)\":\"$$(head -1 $$x)\"," >> $@; \
+	done
+	@echo '"buildutime":$(BUILDUTIME),"timestamp":"$(shell date -R --date="@$(BUILDUTIME)")"}' >> $@
+
+# For some reason this won't work when just using 'includes.%' above.
+$(THEMEDESTDIR)/includes.binary/etc/distrovars.json: $(THEMEDESTDIR)/includes.chroot/etc/distrovars.json
+	@cp $< $@
+
+$(THEMEDESTDIR)/includes.%/etc/distrovars.sh: $(THEMEDESTDIR)/includes.chroot/etc/distrovars.json
+	@jq -r 'to_entries | .[] | .key + "=" + (.value | @sh)' < $< > $@
+
+$(THEMEDESTDIR)/includes.chroot/etc/distroversion:  $(THEMEDESTDIR)/includes.chroot/etc/distrovars.json
+	@mkdir -p $(@D)
+	@printf "$$($(THEMEVERSIONGEN) < $<)" > $@
 
 $(THEMEDESTDIR)/includes.chroot/etc/shortname: $(THEMEDIR)/shortname
 	@mkdir -p $(@D)
@@ -57,9 +118,9 @@ $(THEMEDESTDIR)/includes.chroot/etc/shortname: $(THEMEDIR)/shortname
 		echo "MOTD String Length is $$LEN, all good"; \
 	fi
 
-$(THEMEDESTDIR)/includes.chroot/etc/motd: $(THEMEDESTDIR)/includes.chroot/etc/shortname $(THEMEDESTDIR)/includes.chroot/etc/phonebocxversion
+$(THEMEDESTDIR)/includes.chroot/etc/motd: $(THEMEDESTDIR)/includes.chroot/etc/shortname $(THEMEDESTDIR)/includes.chroot/etc/distroversion
 	@toilet -F metal:border -f pagga "$(shell cat $<)" > $@
-	@cat $(THEMEDESTDIR)/includes.chroot/etc/phonebocxversion >> $@
+	@cat $(THEMEDESTDIR)/includes.chroot/etc/distroversion >> $@
 
 $(THEMEDESTDIR)/includes.chroot/etc/issue: $(THEMEDESTDIR)/includes.chroot/etc/shortname
 	@echo -e "$(shell cat $<) - \\l\n" > $@
