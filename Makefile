@@ -1,9 +1,11 @@
 SHELL=/bin/bash
 BUILDNUM=1
 
-# This should match pbx-kernel-builder
-KERNELVER=6.6.25
+# This is exported for use by the pbx-kernel-builder toolset
+KERNELVER=6.6.39
 KERNELREL=1
+KFIRMWARE=20240610
+export KERNELVER KERNELREL KFIRMWARE
 
 BUILDUTIME=$(shell date +%s)
 BRANCH=$(shell date +%Y.%m)
