@@ -1,0 +1,23 @@
+# This needs some manual host wrangling before it will work.
+#
+#  apt-get -y install qemu-kvm qemu-utils
+#  Enable ip forwarding in /etc/sysctl
+#  Make sure there's a bridge br0 connected to a network with a dhcp server
+#  /etc/qemu/bridge.conf needs to contain 'allow br0'
+#  iptables -I DOCKER-USER -j ACCEPT (otherwise docker rejects forwarding)
+#  A good chunk of luck.
+
+KVMRAM=2G
+KVMCPUS=2
+KVMNETCONF=-net nic,model=virtio,macaddr=52:54:00:00:00:01 -net bridge,br=br0
+KVMKEYS=lctrl-lalt
+KVMDISPLAY=-display gtk,grab-on-hover=off
+UEFIBIOS=-bios /usr/share/qemu/OVMF.fd
+
+src/testimg.qcow2:
+	qemu-img create -f qcow2 src/testimg.qcow2 80G
+
+isotest: src/live-build-workspace/live-image-amd64.hybrid.iso | src/testimg.qcow2
+	kvm -accel kvm -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMNETCONF) $(KVMDISPLAY) \
+	-cpu host -cdrom src/live-build-workspace/live-image-amd64.hybrid.iso $(UEFIBIOS) -drive file=$|
+
