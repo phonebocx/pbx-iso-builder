@@ -48,9 +48,9 @@ PhoneBocx() {
     done
     # Make sure that core is mounted.
     if ! grep -q $tbase/core /proc/mounts; then
-      log_warning_msg Core is not mounted
+      log_warning_msg "Core is not mounted! Recovery needed!"
       if [ ! -e $d/factory/core.squashfs ]; then
-        log_warning_msg "$d/factory/core.squashfs does not exist, this is terrible"
+        log_warning_msg "$d/factory/core.squashfs does not exist, can not use it to recover"
       else
         log_begin_msg Mounting RECOVERY $d/factory/core.squashfs on $tbase/core
         mkdir -p $tbase/core

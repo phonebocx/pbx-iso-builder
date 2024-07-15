@@ -13,11 +13,22 @@ KVMNETCONF=-net nic,model=virtio,macaddr=52:54:00:00:00:01 -net bridge,br=br0
 KVMKEYS=lctrl-lalt
 KVMDISPLAY=-display gtk,grab-on-hover=off
 UEFIBIOS=-bios /usr/share/qemu/OVMF.fd
+SM=$(PWD)/components/smbios
+
+# This doesn't work correctly for some reason. Will need to look into it later
+#SMBIOS=-acpitable file=$(SM)/SLIC -acpitable file=$(SM)/MSDM -smbios file=$(SM)/smbios_type_0.bin -smbios file=$(SM)/smbios_type_1.bin
+SMBIOS=
+
+#-blockdev {"driver":"file","filename":"/usr/share/OVMF/OVMF_CODE_4M.ms.fd","node-name":"libvirt-pflash0-storage","auto-read-only":true,"discard":"unmap"}
+#-blockdev {"node-name":"libvirt-pflash0-format","read-only":true,"driver":"raw","file":"libvirt-pflash0-storage"}
+#-blockdev {"driver":"file","filename":"nvram/uefi_VARS.fd","node-name":"libvirt-pflash1-storage","auto-read-only":true,"discard":"unmap"}
+#-blockdev {"node-name":"libvirt-pflash1-format","read-only":false,"driver":"raw","file":"libvirt-pflash1-storage"}
 
 src/testimg.qcow2:
 	qemu-img create -f qcow2 src/testimg.qcow2 80G
 
 isotest: src/live-build-workspace/live-image-amd64.hybrid.iso | src/testimg.qcow2
 	kvm -accel kvm -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMNETCONF) $(KVMDISPLAY) \
-	-cpu host -cdrom src/live-build-workspace/live-image-amd64.hybrid.iso $(UEFIBIOS) -drive file=$|
+	-cpu host -cdrom src/live-build-workspace/live-image-amd64.hybrid.iso $(UEFIBIOS) \
+	$(SMBIOS) -drive file=$|
 
