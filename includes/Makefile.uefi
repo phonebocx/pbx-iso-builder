@@ -1,0 +1,76 @@
+GITSRC_edk2=https://github.com/tianocore/edk2.git
+
+TOOLS += iasl nasm
+PREREQS += /usr/lib/x86_64-linux-gnu/libuuid.so
+PKG_iasl = acpica-tools
+
+# Just to save typing
+UEFIBASETOOLS=$(SRCDIR)/edk2/BaseTools/Source/C/bin/BrotliCompress
+UEFIDEST=$(SRCDIR)/EFI
+UEFIBINS=$(addprefix $(UEFIDEST)/,Shell.efi Update.efi Defaults.efi)
+export UEFIBINS
+
+.PHONY: uefi
+uefi: $(UEFIBINS)
+
+# This doesn't persist for some reason.
+PYTHON_COMMAND=python3
+export PYTHON_COMMAND
+
+$(UEFIBASETOOLS): | $(SRCDIR)/edk2/Conf/BuildEnv.sh
+	cd $(SRCDIR)/edk2 && make -C BaseTools
+
+$(SRCDIR)/edk2/Conf/BuildEnv.sh: $(SRCDIR)/edk2/.git
+	cd $(SRCDIR)/edk2 && \
+	. ./edksetup.sh && \
+	sed -r -i \
+		-e 's/^ACTIVE_PLATFORM\s.+/ACTIVE_PLATFORM = ShellPkg\/ShellPkg.dsc/' \
+		-e 's/^TARGET\s.+/TARGET = RELEASE/' \
+		-e 's/^TARGET_ARCH\s.+/TARGET_ARCH = X64/' \
+		-e 's/^TOOL_CHAIN_TAG\s.+/TOOL_CHAIN_TAG = GCC5/' \
+		Conf/target.txt && \
+	cp ShellPkg/Application/Shell/Shell.c ShellPkg/Application/Shell/Shell.c.orig
+
+$(UEFIDEST)/Shell.efi: $(UEFIBASETOOLS)
+	@mkdir -p $(@D)
+	cd $(SRCDIR)/edk2 && \
+	. ./edksetup.sh && \
+		rm -f Build/Shell/RELEASE_GCC5/X64/ShellPkg/Application/Shell/EA4BB293-2D7F-4456-A681-1F22F42CD0BC/OUTPUT/Shell.efi && \
+		/bin/cp -f ShellPkg/Application/Shell/Shell.c.orig ShellPkg/Application/Shell/Shell.c && \
+		build && \
+		cp Build/Shell/RELEASE_GCC5/X64/ShellPkg/Application/Shell/EA4BB293-2D7F-4456-A681-1F22F42CD0BC/OUTPUT/Shell.efi $@ && \
+		chmod 755 $@
+
+$(UEFIDEST)/Update.efi: $(UEFIBASETOOLS)
+	@mkdir -p $(@D)
+	cd $(SRCDIR)/edk2 && \
+	. ./edksetup.sh && \
+		rm -f Build/Shell/RELEASE_GCC5/X64/ShellPkg/Application/Shell/EA4BB293-2D7F-4456-A681-1F22F42CD0BC/OUTPUT/Shell.efi && \
+		/bin/cp -f ShellPkg/Application/Shell/Shell.c.orig ShellPkg/Application/Shell/Shell.c && \
+		sed -i \
+			-e 's/startup.nsh/update.nsh/' \
+			-e 's/ShellInfoObject.ShellInitSettings.Delay = 5/ShellInfoObject.ShellInitSettings.Delay = 1/' \
+			-e 's/ShellInfoObject.ShellInitSettings.BitUnion.Bits.NoInterrupt  = FALSE/ShellInfoObject.ShellInitSettings.BitUnion.Bits.NoInterrupt  = TRUE/' \
+			ShellPkg/Application/Shell/Shell.c && \
+		build && \
+		cp Build/Shell/RELEASE_GCC5/X64/ShellPkg/Application/Shell/EA4BB293-2D7F-4456-A681-1F22F42CD0BC/OUTPUT/Shell.efi $@ && \
+		chmod 755 $@
+
+$(UEFIDEST)/Defaults.efi: $(UEFIBASETOOLS)
+	@mkdir -p $(@D)
+	cd $(SRCDIR)/edk2 && \
+	. ./edksetup.sh && \
+		rm -f Build/Shell/RELEASE_GCC5/X64/ShellPkg/Application/Shell/EA4BB293-2D7F-4456-A681-1F22F42CD0BC/OUTPUT/Shell.efi && \
+		/bin/cp -f ShellPkg/Application/Shell/Shell.c.orig ShellPkg/Application/Shell/Shell.c && \
+		sed -i \
+			-e 's/startup.nsh/defaults.nsh/' \
+			-e 's/ShellInfoObject.ShellInitSettings.Delay = 5/ShellInfoObject.ShellInitSettings.Delay = 1/' \
+			-e 's/ShellInfoObject.ShellInitSettings.BitUnion.Bits.NoInterrupt  = FALSE/ShellInfoObject.ShellInitSettings.BitUnion.Bits.NoInterrupt  = TRUE/' \
+			ShellPkg/Application/Shell/Shell.c && \
+		build && \
+		cp Build/Shell/RELEASE_GCC5/X64/ShellPkg/Application/Shell/EA4BB293-2D7F-4456-A681-1F22F42CD0BC/OUTPUT/Shell.efi $@ && \
+		chmod 755 $@
+
+/usr/lib/x86_64-linux-gnu/libuuid.so:
+	apt-get -y install uuid-dev
+

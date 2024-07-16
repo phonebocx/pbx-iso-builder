@@ -40,8 +40,15 @@ debs:
 export ISODEBS
 
 .PHONY: iso
-iso: setup $(ISODEBS) $(PKGDESTDIR)/packages.json
+iso: setup $(ISODEBS) $(PKGDESTDIR)/packages.json /usr/lib/live/build/binary_grub-efi
 	./build-live-iso.sh
+
+# Hack to replace /usr/lib/live/build/binary_grub-efi with a patched one
+# that imports extra efi files into the efi.img dosfs. This should be done
+# CORRECTLY by either patching it on the fly, or even better, submitting a
+# patch upstream, but I'm out of spoons at the moment
+/usr/lib/live/build/binary_grub-efi: $(BUILDROOT)/components/binary_grub-efi
+	cp $< $@
 
 .PHONY: theme
 theme:

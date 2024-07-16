@@ -8,8 +8,8 @@ GITBRANCH_dahdi-tools=$(DTOOLSBRANCH)
 DTOOLSDEBNAME=dahdi-tools_$(DTOOLSVER)-$(DTOOLSREL)_amd64.deb
 DTOOLSDEB=$(DEBDEST)/$(DTOOLSDEBNAME)
 DTSROOT=$(SRCDIR)/dahdi-tools
-BUILDROOT=$(SRCDIR)/dt-buildroot
-MKDIRS += $(BUILDROOT)
+DTBUILDROOT=$(SRCDIR)/dt-buildroot
+MKDIRS += $(DTBUILDROOT)
 
 ISODEBS += $(DTOOLSDEB)
 PREREQS += $(DTOOLSDEB)
@@ -20,8 +20,8 @@ dt: $(DTSROOT)/.git
 
 # dahdi-tools is a hacky package, it's built manually and then just wrapped up
 # into a deb using dpkg-deb
-$(DTOOLSDEB): $(BUILDROOT)/usr/sbin/dahdi_cfg $(BUILDROOT)/DEBIAN/control | $(DEBDEST)
-	cd $(BUILDROOT)/.. && dpkg-deb --build $(BUILDROOT) $@
+$(DTOOLSDEB): $(DTBUILDROOT)/usr/sbin/dahdi_cfg $(DTBUILDROOT)/DEBIAN/control | $(DEBDEST)
+	cd $(DTBUILDROOT)/.. && dpkg-deb --build $(DTBUILDROOT) $@
 
 # Run autoreconf (pulling from git if not already done), as
 # well as hackily pulling in dahdi-linux headers from the
@@ -42,11 +42,11 @@ $(DTSROOT)/dahdi_cfg: $(DTSROOT)/Makefile | $(DTSROOT)/xpp/xtalk/Makefile.patche
 	cd $(DTSROOT) && make
 
 # Install the compiled package to the buildroot
-$(BUILDROOT)/usr/sbin/dahdi_cfg: $(DTSROOT)/dahdi_cfg
-	cd $(DTSROOT) && make DESTDIR=$(BUILDROOT) install
+$(DTBUILDROOT)/usr/sbin/dahdi_cfg: $(DTSROOT)/dahdi_cfg
+	cd $(DTSROOT) && make DESTDIR=$(DTBUILDROOT) install
 
 # Finally, create the control file once it's installed. This is the last
 # part of the chain of DTOOLSDEB requirements.
-$(BUILDROOT)/DEBIAN/control: dahdi-tools.control $(BUILDROOT)/usr/sbin/dahdi_cfg
+$(DTBUILDROOT)/DEBIAN/control: dahdi-tools.control $(DTBUILDROOT)/usr/sbin/dahdi_cfg
 	mkdir -p $(@D)
 	sed -e 's/__TOOLSVER__/$(DTOOLSVER)/' -e 's/__TOOLSREL__/$(DTOOLSREL)/' < dahdi-tools.control > $@

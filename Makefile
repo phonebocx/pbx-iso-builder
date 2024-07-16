@@ -1,6 +1,7 @@
 SHELL=/bin/bash
 BUILDNUM=1
-PWD=$(shell pwd)
+BUILDROOT=$(shell pwd)
+export BUILDNUM BUILDROOT
 
 # This is exported for use by the pbx-kernel-builder toolset
 KERNELVER=6.6.39
@@ -8,19 +9,19 @@ KERNELREL=1
 KFIRMWARE=20240610
 export KERNELVER KERNELREL KFIRMWARE
 
+SRCDIR=$(BUILDROOT)/src
 BUILDUTIME=$(shell date +%s)
 BRANCH=$(shell date +%Y.%m)
 BUILD=$(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
-PKGBUILDDIR=$(PWD)/packages
-SRCDIR=$(PWD)/src
-DEBDEST=$(PWD)/debs
+PKGBUILDDIR=$(BUILDROOT)/packages
+DEBDEST=$(BUILDROOT)/debs
 PKGDESTDIR=$(SRCDIR)/packages
 THEME ?= default
-THEMEDIR ?= $(PWD)/theme/$(THEME)
+THEMEDIR ?= $(BUILDROOT)/theme/$(THEME)
 
 # This is used in liveiso to take all the vars in default, and then
 # overwrite anything provided by the non-default theme
-DEFAULTTHEMEDIR ?= $(PWD)/theme/default
+DEFAULTTHEMEDIR ?= $(BUILDROOT)/theme/default
 
 export KERNELVER KERNELREL BRANCH BUILDNUM BUILD SRCDIR THEME THEMEDIR BUILDUTIME PKGDESTDIR
 

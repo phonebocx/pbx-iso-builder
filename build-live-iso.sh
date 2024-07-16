@@ -90,8 +90,20 @@ rsync -av ../../pbxboot/ config/
 mkdir -p config/includes.binary/live
 rsync -av ../packages config/includes.binary/live
 
+# If we have UEFI binaries, copy them in
+if [ "$UEFIBINS" ]; then
+	echo "UEFI Binaries: $UEFIBINS"
+	mkdir -p config/includes.chroot/boot/EFI
+	cp $UEFIBINS config/includes.chroot/boot/EFI
+fi
+
 # And finally the theme
 rsync -av ${THEMEDESTDIR}/ config/
+
+# And the buildinfo
+BIOUT=config/includes.binary/live/buildinfo.json
+../../components/gitinfo.php > $BIOUT
+cp $BIOUT config/includes.chroot/etc/buildinfo.json
 
 lb build 2>&1 | tee build.log
 

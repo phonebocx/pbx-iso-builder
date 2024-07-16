@@ -1,0 +1,17 @@
+#!/bin/bash
+
+echo I: Creating backup sources.list for devel
+
+cat > /etc/apt/sources.list.bak << EOF
+# Created by 98-apt-sources-backup.chroot hook
+deb http://mirror.aarnet.edu.au/debian/ bookworm main contrib non-free
+deb-src http://mirror.aarnet.edu.au/debian/ bookworm main contrib non-free
+deb http://security.debian.org/ bookworm-security main contrib non-free
+deb-src http://security.debian.org/ bookworm-security main contrib non-free
+deb http://mirror.aarnet.edu.au/debian/ bookworm-updates main contrib non-free
+deb-src http://mirror.aarnet.edu.au/debian/ bookworm-updates main contrib non-free
+deb http://mirror.aarnet.edu.au/debian/ bookworm-backports main contrib non-free
+deb-src http://mirror.aarnet.edu.au/debian/ bookworm-backports main contrib non-free
+EOF
+
+

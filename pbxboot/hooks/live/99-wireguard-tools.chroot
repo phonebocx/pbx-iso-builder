@@ -1,0 +1,12 @@
+#!/bin/bash
+
+echo I: Installing wireguard-tools binaries
+
+mkdir -p /tmp/wginstall
+cd /tmp/wginstall
+
+apt-get download wireguard-tools
+dpkg --force-all -i wireguard-tools*deb
+cd /
+rm -rf /tmp/wginstall
+

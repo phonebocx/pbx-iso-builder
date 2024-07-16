@@ -1,6 +1,6 @@
 
 $(SRCDIR)/%/.git src/%/.git:
-	if [ ! -d $(@D) ]; then mkdir -p src; git clone $(GITSRC_$*) $(@D); fi
+	if [ ! -d $(@D) ]; then mkdir -p src; git clone --recursive $(GITSRC_$*) $(@D); fi
 	cd $(@D) && git pull; [ "$(GITBRANCH_$*)" ] && git checkout $(GITBRANCH_$*) || git checkout master
 
 $(SRCDIR)/% src/%:

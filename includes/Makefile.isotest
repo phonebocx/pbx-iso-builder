@@ -13,7 +13,7 @@ KVMNETCONF=-net nic,model=virtio,macaddr=52:54:00:00:00:01 -net bridge,br=br0
 KVMKEYS=lctrl-lalt
 KVMDISPLAY=-display gtk,grab-on-hover=off
 UEFIBIOS=-bios /usr/share/qemu/OVMF.fd
-SM=$(PWD)/components/smbios
+SM=$(BUILDROOT)/components/smbios
 
 # This doesn't work correctly for some reason. Will need to look into it later
 #SMBIOS=-acpitable file=$(SM)/SLIC -acpitable file=$(SM)/MSDM -smbios file=$(SM)/smbios_type_0.bin -smbios file=$(SM)/smbios_type_1.bin
