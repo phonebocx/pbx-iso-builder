@@ -24,11 +24,14 @@ THEMEVERSIONGEN=jq -r '"\(.distroname) Build \(.buildver) using Linux \(.kernelv
 
 # Important - to avoid namespace collisions, the package installer below
 # prepends 'immutable-' to the package name. So if you're adding more packages,
-# namespace the GITSRC correctly. Sorry.
-IMMUTABLEPACKAGES=core othercore
-GITSRC_immutable-othercore=git@github.com:phonebocx/pbxpackage-core.git
+# namespace the GITSRC correctly. Sorry. Check out the default theme makefile
+# for an example of how to add a package as part of a theme. It also uses
+# the GITBRANCH_ var to use 'main' instead of 'master'
+IMMUTABLEPACKAGES=core
+#GITSRC_immutable-core=https://github.com/phonebocx/pbxpackage-core.git
+GITSRC_immutable-core=git@github.com:phonebocx/pbxpackage-core.git
 
-# HOWEVER, if there's a Makefile in the themedir, include that. It may want to clobber things.
+# If there's a Makefile in the themedir, include that. It will want to clobber or add things
 include $(wildcard $(THEMEDIR)/Makefile)
 
 THEMEDESTFILES += $(addprefix $(THEMEDESTDIR)/,$(THEMEFILES))
@@ -58,6 +61,7 @@ theme:
 	@rm -f $(THEMEDESTFILES)
 	@$(MAKE) setup
 
+DEVPACKAGES=
 # This copies anything found in ../packages (hardcoded package dev dir) into
 # srcdir/packages, then uses the git helper to pull anything left over that
 # is in the IMMUTABLEPACKAGES var.
@@ -65,17 +69,21 @@ theme:
 packages $(PKGDESTDIR)/packages.json:
 	@echo "Theme $(THEME) uses packages '$(IMMUTABLEPACKAGES)'"
 	@rm -rf $(PKGBUILDDIR); mkdir -p $(PKGBUILDDIR)
-	@DEV="$(realpath $(wildcard ../packages/*))"; if [ "$$DEV" ]; then \
-		for devpack in $$DEV; do echo "Found Dev package $$devpack, installing to $(PKGBUILDDIR)"; \
-			rsync -a $$devpack $(PKGBUILDDIR)/; \
+	@if [ "$(DEVPACKAGES)" ]; then echo "Building with dev packages"; \
+		DEV="$(realpath $(wildcard ../packages/*))"; \
+		if [ "$$DEV" ]; then \
+			for devpack in $$DEV; do \
+				echo "Found Dev package $$devpack, installing to $(PKGBUILDDIR)"; \
+				rsync -a $$devpack $(PKGBUILDDIR)/; \
 			done; \
+		fi; \
 	fi
 	@for ipack in $(IMMUTABLEPACKAGES); do if [ ! -d "$(PKGBUILDDIR)/$$ipack" ]; then \
 		echo "Installing package $$ipack"; \
-		$(MAKE) -s $(SRCDIR)/immutable-$$ipack/.git; \
-		[ -e $(SRCDIR)/immutable-$$ipack/meta/packagename ] && rsync -a $(SRCDIR)/immutable-$$ipack $(PKGBUILDDIR)/$$ipack || echo "Error - No meta/packagename in $(SRCDIR)/immutable-$$ipack, skipping"; \
+		$(MAKE) $(SRCDIR)/immutable-$$ipack/.git; \
+		[ -e $(SRCDIR)/immutable-$$ipack/meta/packagename ] && rsync -a $(SRCDIR)/immutable-$$ipack/ $(PKGBUILDDIR)/$$ipack || echo "Error - No meta/packagename in $(SRCDIR)/immutable-$$ipack, skipping"; \
 	fi; done
-	@rm -rf $(PKGBUILDDIR/*/.git* $(PKGDESTDIR)
+	@rm -rf $(PKGBUILDDIR)/*/.git* $(PKGDESTDIR)
 	./build-packages.php --force --dest=$(PKGDESTDIR)
 
 ###
@@ -106,7 +114,7 @@ $(THEMEDESTDIR)/includes.chroot/distro/distrovars.json: $(THEMEDIR)/distroname $
 	done
 	@echo '"buildutime":$(BUILDUTIME),"timestamp":"$(shell date -R --date="@$(BUILDUTIME)")"}' >> $@
 
-# For some reason this won't work when just using 'includes.%' above.
+# Copy chroot to distro. Can't use a wildcard for this, as the prereq above must be a PHONY
 $(THEMEDESTDIR)/includes.binary/distro/distrovars.json: $(THEMEDESTDIR)/includes.chroot/distro/distrovars.json
 	@mkdir -p $(@D)
 	@cp $< $@
