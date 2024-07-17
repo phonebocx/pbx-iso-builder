@@ -27,14 +27,14 @@ NAL=noautologin
 NAL=
 
 lb config \
-        --architectures amd64 --distribution ${DISTRO} --iso-application phonebocx --iso-publisher xrobau --iso-volume phonebocx \
-        --archive-areas "main contrib non-free $F" --updates true --security true --backports true \
-        --initsystem systemd --memtest memtest86+ --debootstrap-options "--include=apt-transport-https,ca-certificates" \
-        --bootappend-live "boot=live hostname=phonebocx ${NAL} union=overlay console=ttyS0,115200 console=tty0 net.ifnames=0 biosdevname=0 nomodeset" \
-       	--bootappend-live-failsafe none \
-       	--linux-packages linux-image-${KERNELVER} \
-       	--linux-flavours ${KERNELREL} \
-       	--debootstrap-options "--include=apt-transport-https,ca-certificates"
+	--architectures amd64 --distribution ${DISTRO} --iso-application phonebocx --iso-publisher xrobau --iso-volume phonebocx \
+	--archive-areas "main contrib non-free $F" --updates true --security true --backports true \
+	--initsystem systemd --memtest memtest86+ --debootstrap-options "--include=apt-transport-https,ca-certificates" \
+	--bootappend-live "boot=live hostname=phonebocx ${NAL} union=overlay console=ttyS0,115200 console=tty0 net.ifnames=0 biosdevname=0 nomodeset" \
+	--bootappend-live-failsafe none \
+	--linux-packages linux-image-${KERNELVER} \
+	--linux-flavours ${KERNELREL} \
+	--debootstrap-options "--include=apt-transport-https,ca-certificates"
 
 if [ "$DEBMIRROR" ]; then
 	sed -i 's!http://deb.debian.org/debian/!'${DEBMIRROR}'!g' config/bootstrap
@@ -42,18 +42,25 @@ fi
 
 mkdir -p config/bootloaders
 
+# Copy the default system bootloaders in place.
 for x in /usr/share/live/build/bootloaders/*; do
 	rsync -a $x config/bootloaders
 done
 
-# Changes to default bootloader configs are in liveconf.
+# Changes to default bootloader configs are in the liveconf directory.
+# They are:
 #  syslinux_common/live.cfg.in main menu
 #  syslinux_common/menu.cfg Removed ^G beep
 #  grub-pc/grub.cfg Adds set timeout=5
 #  grub-pc/config.cfg changes gfxmode=auto to gfxmode=1024x768x32 and disables the beep
 
-# Put our splash in place, which is updated on every build
-cp ${SPLASHSVG} config/bootloaders/syslinux_common/splash.svg
+# Put our large (1024x768) live splash in place and make sure there's nothing that would
+# clobber it
+cp ${LIVESPLASHLARGEPNG} config/bootloaders/syslinux_common/splash.png
+rm -f config/bootloaders/*/*.svg
+
+# All generated splash pngs are copied into includes.*/distro as part of the
+# theme generation in Makefile.liveiso
 
 # Import our additional repositories
 cp ../*.list.* ../*.key.* config/archives
@@ -97,13 +104,10 @@ if [ "$UEFIBINS" ]; then
 	cp $UEFIBINS config/includes.chroot/boot/EFI
 fi
 
-# And finally the theme
+# And finally embed the compiled theme and buildinfo
 rsync -av ${THEMEDESTDIR}/ config/
-
-# And the buildinfo
-BIOUT=config/includes.binary/live/buildinfo.json
-../../components/gitinfo.php > $BIOUT
-cp $BIOUT config/includes.chroot/etc/buildinfo.json
+BIOUT=config/includes.binary/distro/buildinfo.json
+../../components/gitinfo.php >$BIOUT
+cp $BIOUT config/includes.chroot/distro/buildinfo.json
 
 lb build 2>&1 | tee build.log
-

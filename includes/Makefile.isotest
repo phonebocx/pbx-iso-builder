@@ -27,8 +27,11 @@ SMBIOS=
 src/testimg.qcow2:
 	qemu-img create -f qcow2 src/testimg.qcow2 80G
 
+# -vga vmware is to stop grub having issues on startup. Without it, things like
+# 'videoinfo' just hang. I found the tip here:
+#    https://askubuntu.com/questions/1234203/video-problems-with-efi-boot-on-kvm-qemu
 isotest: src/live-build-workspace/live-image-amd64.hybrid.iso | src/testimg.qcow2
 	kvm -accel kvm -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMNETCONF) $(KVMDISPLAY) \
 	-cpu host -cdrom src/live-build-workspace/live-image-amd64.hybrid.iso $(UEFIBIOS) \
-	$(SMBIOS) -drive file=$|
+	-vga vmware $(SMBIOS) -drive file=$|
 

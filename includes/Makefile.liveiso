@@ -13,10 +13,12 @@ WGETURL_phonebocx.sources=$(LIVESRC)
 THEMEDESTDIR=$(SRCDIR)/themefiles
 export THEMEDESTDIR
 
-# Default Themeing for the ISO
-THEMEFILES=includes.chroot/etc/motd includes.chroot/etc/distroversion includes.chroot/etc/shortname \
-	includes.chroot/etc/issue includes.chroot/etc/issue.net includes.chroot/etc/distrovars.json \
-	includes.binary/etc/distrovars.json includes.binary/etc/distrovars.sh includes.chroot/etc/distrovars.sh
+# These go into both live and binary. ALLSPLASHPACKAGES comes from Makefile.001-splash
+DISTROFILES=distrovars.json distrovars.sh distroversion shortname $(notdir $(ALLSPLASHPNGS))
+
+THEMEFILES=includes.chroot/etc/motd includes.chroot/etc/issue includes.chroot/etc/issue.net \
+	$(addprefix includes.chroot/distro/,$(DISTROFILES)) \
+	$(addprefix includes.binary/distro/,$(DISTROFILES))
 
 THEMEVERSIONGEN=jq -r '"\(.distroname) Build \(.buildver) using Linux \(.kernelver)\nBuild Timestamp: \(.timestamp)\n"'
 
@@ -29,7 +31,7 @@ GITSRC_immutable-othercore=git@github.com:phonebocx/pbxpackage-core.git
 # HOWEVER, if there's a Makefile in the themedir, include that. It may want to clobber things.
 include $(wildcard $(THEMEDIR)/Makefile)
 
-THEMEDESTFILES=$(addprefix $(THEMEDESTDIR)/,$(THEMEFILES))
+THEMEDESTFILES += $(addprefix $(THEMEDESTDIR)/,$(THEMEFILES))
 
 PREREQS += $(SRCDIR)/live.list.chroot $(SRCDIR)/phonebocx.key.chroot $(SRCDIR)/phonebocx.sources $(THEMEDESTFILES)
 
@@ -95,8 +97,8 @@ $(THEMEVARS):
 	fi
 
 # Always rebuild this, as this is the base that everything else uses
-.PHONY: $(THEMEDESTDIR)/includes.chroot/etc/distrovars.json
-$(THEMEDESTDIR)/includes.chroot/etc/distrovars.json: $(THEMEDIR)/distroname $(THEMEDESTDIR)/includes.chroot/etc/shortname $(THEMEVARS)
+.PHONY: $(THEMEDESTDIR)/includes.chroot/distro/distrovars.json
+$(THEMEDESTDIR)/includes.chroot/distro/distrovars.json: $(THEMEDIR)/distroname $(THEMEDESTDIR)/includes.chroot/distro/shortname $(THEMEVARS)
 	@mkdir -p $(@D)
 	@echo -n '{"kernelver":"$(KERNELVER)","buildver":"$(BUILD)",' > $@
 	@for x in $^ $(wildcard $(THEMEVARS)/*); do \
@@ -105,17 +107,18 @@ $(THEMEDESTDIR)/includes.chroot/etc/distrovars.json: $(THEMEDIR)/distroname $(TH
 	@echo '"buildutime":$(BUILDUTIME),"timestamp":"$(shell date -R --date="@$(BUILDUTIME)")"}' >> $@
 
 # For some reason this won't work when just using 'includes.%' above.
-$(THEMEDESTDIR)/includes.binary/etc/distrovars.json: $(THEMEDESTDIR)/includes.chroot/etc/distrovars.json
+$(THEMEDESTDIR)/includes.binary/distro/distrovars.json: $(THEMEDESTDIR)/includes.chroot/distro/distrovars.json
+	@mkdir -p $(@D)
 	@cp $< $@
 
-$(THEMEDESTDIR)/includes.%/etc/distrovars.sh: $(THEMEDESTDIR)/includes.chroot/etc/distrovars.json
+$(THEMEDESTDIR)/includes.%/distro/distrovars.sh: $(THEMEDESTDIR)/includes.chroot/distro/distrovars.json
 	@jq -r 'to_entries | .[] | .key + "=" + (.value | @sh)' < $< > $@
 
-$(THEMEDESTDIR)/includes.chroot/etc/distroversion:  $(THEMEDESTDIR)/includes.chroot/etc/distrovars.json
+$(THEMEDESTDIR)/includes.%/distro/distroversion:  $(THEMEDESTDIR)/includes.chroot/distro/distrovars.json
 	@mkdir -p $(@D)
 	@printf "$$($(THEMEVERSIONGEN) < $<)" > $@
 
-$(THEMEDESTDIR)/includes.chroot/etc/shortname: $(THEMEDIR)/shortname
+$(THEMEDESTDIR)/includes.chroot/distro/shortname: $(THEMEDIR)/shortname
 	@mkdir -p $(@D)
 	@sed -s 's/__BUILD__/$(BUILD)/' < $< | head -1 > $@
 	@LEN=$$(cat $@ | wc -c); if [ "$$LEN" -gt 20 ]; then \
@@ -125,12 +128,27 @@ $(THEMEDESTDIR)/includes.chroot/etc/shortname: $(THEMEDIR)/shortname
 		echo "MOTD String Length is $$LEN, all good"; \
 	fi
 
-$(THEMEDESTDIR)/includes.chroot/etc/motd: $(THEMEDESTDIR)/includes.chroot/etc/shortname $(THEMEDESTDIR)/includes.chroot/etc/distroversion
-	@toilet -F metal:border -f pagga "$(shell cat $<)" > $@
-	@cat $(THEMEDESTDIR)/includes.chroot/etc/distroversion >> $@
+$(THEMEDESTDIR)/includes.binary/distro/shortname: $(THEMEDESTDIR)/includes.chroot/distro/shortname
+	@mkdir -p $(@D)
+	@cp $< $@
 
-$(THEMEDESTDIR)/includes.chroot/etc/issue: $(THEMEDESTDIR)/includes.chroot/etc/shortname
+$(THEMEDESTDIR)/includes.chroot/etc/motd: $(THEMEDESTDIR)/includes.chroot/distro/shortname $(THEMEDESTDIR)/includes.chroot/distro/distroversion
+	@mkdir -p $(@D)
+	@toilet -F metal:border -f pagga "$(shell cat $<)" > $@
+	@cat $(THEMEDESTDIR)/includes.chroot/distro/distroversion >> $@
+
+$(THEMEDESTDIR)/includes.chroot/etc/issue: $(THEMEDESTDIR)/includes.chroot/distro/shortname
+	@mkdir -p $(@D)
 	@echo -e "$(shell cat $<) - \\l\n" > $@
 
-$(THEMEDESTDIR)/includes.chroot/etc/issue.net: $(THEMEDESTDIR)/includes.chroot/etc/shortname
+$(THEMEDESTDIR)/includes.chroot/etc/issue.net: $(THEMEDESTDIR)/includes.chroot/distro/shortname
+	@mkdir -p $(@D)
 	@echo -e "$(shell cat $<)\n" >$@
+
+$(THEMEDESTDIR)/includes.binary/distro/%.png: $(SRCDIR)/%.png
+	@mkdir -p $(@D)
+	cp $< $@
+
+$(THEMEDESTDIR)/includes.chroot/distro/%.png: $(SRCDIR)/%.png
+	@mkdir -p $(@D)
+	cp $< $@

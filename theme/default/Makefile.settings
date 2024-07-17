@@ -1,0 +1,5 @@
+# This is for any settings that need to be provided to other things, and
+# is included as part of setup. You shouldn't have any targets in here,
+# unless you're really sure you know what you're doing.
+
+THEMEFONTS += Condition.ttf IndieFlower.ttf VG5000-Regular_web.ttf

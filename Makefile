@@ -19,14 +19,19 @@ PKGDESTDIR=$(SRCDIR)/packages
 THEME ?= default
 THEMEDIR ?= $(BUILDROOT)/theme/$(THEME)
 
+# Anything here can be automatically made by the $(MKDIRS) target below
+MKDIRS=$(SRCDIR) $(DEBDEST)
+
+# If the theme has a settings makefile, include that to add
+# anything that might be needed by other includes. Currently
+# this is only used for adding fonts to the system.
+include $(wildcard $(THEMEDIR)/Makefile.settings)
+
 # This is used in liveiso to take all the vars in default, and then
 # overwrite anything provided by the non-default theme
 DEFAULTTHEMEDIR ?= $(BUILDROOT)/theme/default
 
 export KERNELVER KERNELREL BRANCH BUILDNUM BUILD SRCDIR THEME THEMEDIR BUILDUTIME PKGDESTDIR
-
-# Anything here can be automatically made by the $(MKDIRS) target below
-MKDIRS=$(SRCDIR) $(DEBDEST)
 
 # Things that are always needed
 TOOLS += curl vim ping wget netstat syslinux figlet toilet

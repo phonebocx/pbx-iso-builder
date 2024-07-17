@@ -1,0 +1,54 @@
+# This is named 001-splash to make sure it's included before everything else.
+
+# Splash needs rsvg-convert
+TOOLS += rsvg-convert
+PKG_rsvg-convert = librsvg2-bin
+RELEASE=dev
+
+# This splash is what is displayed on an installed system
+SPLASHSVG=$(SRCDIR)/splash_edited.svg
+SPLASHPNG=$(SRCDIR)/splash.png
+SPLASHLARGEPNG=$(SRCDIR)/splash1024.png
+export SPLASHPNG SPLASHSVG SPLASHLARGEPNG
+
+# Splash that is used on the installer
+LIVESPLASHSVG=$(SRCDIR)/live_splash_edited.svg
+LIVESPLASHPNG=$(SRCDIR)/livesplash.png
+LIVESPLASHLARGEPNG=$(SRCDIR)/livesplash1024.png
+export LIVESPLASHPNG LIVESPLASHSVG LIVESPLASHLARGEPNG
+
+ALLSPLASHPNGS=$(SPLASHPNG) $(LIVESPLASHPNG) $(SPLASHLARGEPNG) $(LIVESPLASHLARGEPNG)
+
+# Themefonts should be in the theme's Makefile.settings
+THEMEFONTDESTS=$(addprefix /usr/share/fonts/truetype/,$(THEMEFONTS))
+
+PREREQS += $(SPLASHPNG)
+
+/usr/share/fonts/truetype/%.ttf: $(THEMEDIR)/%.ttf
+	@mkdir -p $(@D)
+	@cp $< $@
+
+.PHONY: splash
+splash:
+	rm -f $(SPLASHSVG) $(LIVESPLASHSVG)
+	$(MAKE) $(SPLASHPNG) $(LIVESPLASHPNG)
+
+$(SPLASHSVG): $(THEMEDIR)/splashsrc.svg
+	sed -e 's/__BUILD__/$(BUILD)/' -e 's/@RELEASE@/$(RELEASE)/' -e 's/@ARCHITECTURE@/amd64/' < $< > $@
+
+$(SPLASHPNG): $(SPLASHSVG) $(THEMEFONTDESTS)
+	rsvg-convert --format png --height 600 --width 800 $< -o $@
+
+$(SPLASHLARGEPNG): $(SPLASHSVG) $(THEMEFONTDESTS)
+	rsvg-convert --format png --height 768 --width 1024 $< -o $@
+
+$(LIVESPLASHSVG): $(THEMEDIR)/livesplashsrc.svg
+	sed -e 's/__BUILD__/$(BUILD)/' -e 's/@RELEASE@/$(RELEASE)/' -e 's/@ARCHITECTURE@/amd64/' < $< > $@
+
+$(LIVESPLASHPNG): $(LIVESPLASHSVG) $(THEMEFONTDESTS)
+	rsvg-convert --format png --height 600 --width 800 $< -o $@
+
+$(LIVESPLASHLARGEPNG): $(LIVESPLASHSVG) $(THEMEFONTDESTS)
+	rsvg-convert --format png --height 768 --width 1024 $< -o $@
+
+
