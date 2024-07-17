@@ -9,29 +9,39 @@
 
 KVMRAM=2G
 KVMCPUS=2
+KVMCPU=core2duo
 KVMNETCONF=-net nic,model=virtio,macaddr=52:54:00:00:00:01 -net bridge,br=br0
 KVMKEYS=lctrl-lalt
-KVMDISPLAY=-display gtk,grab-on-hover=off
-UEFIBIOS=-bios /usr/share/qemu/OVMF.fd
-SM=$(BUILDROOT)/components/smbios
+KVMDISPLAY=-display gtk
+# This is the bios that is used
+UCODENAME=OVMF_CODE.fd
+UCODE=-drive if=pflash,unit=0,format=raw,readonly=on,file=/usr/share/OVMF/$(UCODENAME)
+# This is the uefi variable store
+UVARSNAME=OVMF_VARS.fd
+UVARS=-drive if=pflash,unit=1,format=raw,file=src/$(UVARSNAME)
+UEFIBOOT=$(UCODE) $(UVARS)
 
-# This doesn't work correctly for some reason. Will need to look into it later
-#SMBIOS=-acpitable file=$(SM)/SLIC -acpitable file=$(SM)/MSDM -smbios file=$(SM)/smbios_type_0.bin -smbios file=$(SM)/smbios_type_1.bin
-SMBIOS=
-
-#-blockdev {"driver":"file","filename":"/usr/share/OVMF/OVMF_CODE_4M.ms.fd","node-name":"libvirt-pflash0-storage","auto-read-only":true,"discard":"unmap"}
-#-blockdev {"node-name":"libvirt-pflash0-format","read-only":true,"driver":"raw","file":"libvirt-pflash0-storage"}
-#-blockdev {"driver":"file","filename":"nvram/uefi_VARS.fd","node-name":"libvirt-pflash1-storage","auto-read-only":true,"discard":"unmap"}
-#-blockdev {"node-name":"libvirt-pflash1-format","read-only":false,"driver":"raw","file":"libvirt-pflash1-storage"}
-
-src/testimg.qcow2:
-	qemu-img create -f qcow2 src/testimg.qcow2 80G
-
+KVMVGA=-vga vmware
 # -vga vmware is to stop grub having issues on startup. Without it, things like
 # 'videoinfo' just hang. I found the tip here:
 #    https://askubuntu.com/questions/1234203/video-problems-with-efi-boot-on-kvm-qemu
-isotest: src/live-build-workspace/live-image-amd64.hybrid.iso | src/testimg.qcow2
-	kvm -accel kvm -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMNETCONF) $(KVMDISPLAY) \
-	-cpu host -cdrom src/live-build-workspace/live-image-amd64.hybrid.iso $(UEFIBIOS) \
-	-vga vmware $(SMBIOS) -drive file=$|
 
+# This doesn't work correctly for some reason. Will need to look into it later
+#SM=$(BUILDROOT)/components/smbios
+#SMBIOS=-acpitable file=$(SM)/SLIC -acpitable file=$(SM)/MSDM -smbios file=$(SM)/smbios_type_0.bin -smbios file=$(SM)/smbios_type_1.bin
+SMBIOS=
+
+src/testimg.qcow2: | src/$(UVARSNAME)
+	qemu-img create -f qcow2 src/testimg.qcow2 80G
+
+src/OVMF_%.fd:
+	@cp /usr/share/OVMF/$(@F) $@
+
+.PHONY: isoclean isotest
+isoclean:
+	rm -f src/testimg.qcow2 src/OVMF*
+	$(MAKE) isotest
+
+isotest: src/live-build-workspace/live-image-amd64.hybrid.iso | src/testimg.qcow2
+	kvm -cpu $(KVMCPU) -accel kvm -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMNETCONF) $(KVMDISPLAY) \
+	-cdrom $< $(UEFIBOOT) -drive file=$| $(KVMVGA) $(SMBIOS)
