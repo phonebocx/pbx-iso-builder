@@ -4,7 +4,7 @@ BUILDROOT=$(shell pwd)
 export BUILDNUM BUILDROOT
 
 # This is exported for use by the pbx-kernel-builder toolset
-KERNELVER=6.6.39
+KERNELVER=6.6.40
 KERNELREL=1
 KFIRMWARE=20240610
 export KERNELVER KERNELREL KFIRMWARE

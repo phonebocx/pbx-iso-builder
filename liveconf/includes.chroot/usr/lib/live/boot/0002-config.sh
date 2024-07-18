@@ -6,8 +6,6 @@ PERSISTENCE="true"
 export PERSISTENCE
 
 if grep -q BOOT_IMAGE=/live /proc/cmdline; then
-	NOPERSISTENCE="liveboot"
-	export NOPERSISTENCE
+    NOPERSISTENCE="liveboot"
+    export NOPERSISTENCE
 fi
-
-
