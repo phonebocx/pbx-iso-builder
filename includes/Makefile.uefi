@@ -7,6 +7,7 @@ PKG_iasl = acpica-tools
 # Just to save typing
 UEFIBASETOOLS=$(SRCDIR)/edk2/BaseTools/Source/C/bin/BrotliCompress
 UEFIDEST=$(SRCDIR)/EFI
+# These are copied in build-live-iso.sh
 UEFIBINS=$(addprefix $(UEFIDEST)/,Shell.efi Update.efi Defaults.efi)
 export UEFIBINS
 

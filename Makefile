@@ -1,7 +1,11 @@
 SHELL=/bin/bash
-BUILDNUM=1
 BUILDROOT=$(shell pwd)
-export BUILDNUM BUILDROOT
+BUILDUTIME=$(shell date +%s)
+BRANCH=$(shell date +%Y.%m)
+# TODO: Fix this
+BUILDNUM=1
+BUILD=$(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
+export BRANCH BUILDNUM BUILDROOT BUILDUTIME
 
 # This is exported for use by the pbx-kernel-builder toolset
 KERNELVER=6.6.40
@@ -9,18 +13,42 @@ KERNELREL=1
 KFIRMWARE=20240610
 export KERNELVER KERNELREL KFIRMWARE
 
-SRCDIR=$(BUILDROOT)/src
-BUILDUTIME=$(shell date +%s)
-BRANCH=$(shell date +%Y.%m)
-BUILD=$(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
-PKGBUILDDIR=$(BUILDROOT)/packages
-DEBDEST=$(BUILDROOT)/debs
-PKGDESTDIR=$(SRCDIR)/packages
-THEME ?= default
-THEMEDIR ?= $(BUILDROOT)/theme/$(THEME)
+# This should be in a totally different filesystem to THIS
+# builder, to avoid things like vscode trying to explore everything
+# inside a full system chroot. Everything in here can be thrown away
+# without any consequences. I strongly suggest a different volume.
+COREBUILD=/buildroot
+ISOBUILDROOT=$(COREBUILD)/live-build-workspace
+export COREBUILD ISOBUILDROOT
 
-# Anything here can be automatically made by the $(MKDIRS) target below
-MKDIRS=$(SRCDIR) $(DEBDEST)
+# This is where things are staged.
+SRCDIR=$(BUILDROOT)/src
+# This is the directory that packages are staged to, before being squashfs'ed
+PKGBUILDDIR=$(SRCDIR)/src/packages
+# This is the directory that is copied into /live/packages on the ISO
+PKGDESTDIR=$(COREBUILD)/packages
+# Any debs placed here get injected by build-live-iso.sh
+DEBDEST=$(SRCDIR)/debs
+# This is everything that gets overlaid over the default config in
+# ISOBUILDROOT *before* the STAGING folder is applied. This allows
+# something in staging to override a default (eg, a theme)
+LIVEBUILDSRC=$(BUILDROOT)/livebuild
+# This is the staging directory for anything that should be merged
+# on top of $(ISOBUILDROOT)/config in build-live-iso.sh
+STAGING=$(SRCDIR)/staging
+export SRCDIR PKGBUILDDIR PKGDESTDIR DEBDEST LIVEBUILDSRC STAGING
+
+# Anything here can, and is, automatically made by the $(MKDIRS) target below
+# Other makefiles should add to this.
+MKDIRS = $(SRCDIR) $(DEBDEST) $(ISOBUILDROOT) $(PKGDESTDIR)
+
+# Anything in prereqs is made by `make setup`
+PREREQS = $(MKDIRS)
+
+# This is a setting-only makefile, to figure out what the theme
+# SHOULD be, and possibly download it if needed. This is included
+# early before anything else
+include $(BUILDROOT)/components/Makefile.theme
 
 # If the theme has a settings makefile, include that to add
 # anything that might be needed by other includes. Currently
@@ -30,8 +58,6 @@ include $(wildcard $(THEMEDIR)/Makefile.settings)
 # This is used in liveiso to take all the vars in default, and then
 # overwrite anything provided by the non-default theme
 DEFAULTTHEMEDIR ?= $(BUILDROOT)/theme/default
-
-export KERNELVER KERNELREL BRANCH BUILDNUM BUILD SRCDIR THEME THEMEDIR BUILDUTIME PKGDESTDIR
 
 # Things that are always needed
 TOOLS += curl vim ping wget netstat syslinux figlet toilet
@@ -56,11 +82,9 @@ STARGETS += $(PKGS) $(SPKGS)
 # And now trigger them
 .PHONY: setup
 setup: $(STARGETS) $(PREREQS) | $(SRCDIR)
-	@echo "There are $(PREREQS)"
 
 build: setup $(PREREQS)
-	@echo "There are $(PREREQS)"
-
+	@echo "Build: There are $(PREREQS)"
 
 .PHONY: debug
 debug:
@@ -68,7 +92,7 @@ debug:
 
 # This installs whatever is needed by PKGS or SPKGS
 /usr/bin/% /usr/sbin/%:
-	p="$(PKG_$*)"; p=$${p:=$*}; apt-get -y install $$p || ( echo "Don't know how to install $*, fix the makefile"; exit 1 )
+	@p="$(PKG_$*)"; p=$${p:=$*}; apt-get -y install $$p || ( echo "Don't know how to install $*, add PKG_$*=dpkgname to the makefile"; exit 1 )
 
 # Just make anything in MKDIRS, easy DRY.
 $(MKDIRS):

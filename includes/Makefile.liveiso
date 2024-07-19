@@ -1,51 +1,33 @@
-TOOLS += jq
 DEBMIRROR=http://mirror.aarnet.edu.au/debian/
 LIVECONF=$(shell pwd)/liveconf
 export DEBMIRROR LIVECONF
 
 REPOSRC=https://repo.phonebo.cx/debian/phonebocx.apt.source
+REPOSRCDEST=$(STAGING)/includes.chroot/etc/apt/sources.list.d/phonebocx.sources
 PUBKEYSRC=https://repo.phonebo.cx/phonebocx.gpg.key
 LIVESRC=https://repo.phonebo.cx/debian/phonebocx.sources
 WGETURL_live.list.chroot=$(REPOSRC)
 WGETURL_phonebocx.key.chroot=$(PUBKEYSRC)
 WGETURL_phonebocx.sources=$(LIVESRC)
 
-THEMEDESTDIR=$(SRCDIR)/themefiles
-export THEMEDESTDIR
+PREREQS += $(STAGING)/archives/live.list.chroot $(STAGING)/archives/phonebocx.key.chroot $(REPOSRCDEST)
 
-# These go into both live and binary. ALLSPLASHPACKAGES comes from Makefile.001-splash
-DISTROFILES=distrovars.json distrovars.sh distroversion shortname $(notdir $(ALLSPLASHPNGS))
+# This is hacky patch. See below.
+PREREQS += /usr/lib/live/build/binary_grub-efi
 
-THEMEFILES=includes.chroot/etc/motd includes.chroot/etc/issue includes.chroot/etc/issue.net \
-	$(addprefix includes.chroot/distro/,$(DISTROFILES)) \
-	$(addprefix includes.binary/distro/,$(DISTROFILES))
-
-THEMEVERSIONGEN=jq -r '"\(.distroname) Build \(.buildver) using Linux \(.kernelver)\nBuild Timestamp: \(.timestamp)\n"'
-
-# Important - to avoid namespace collisions, the package installer below
-# prepends 'immutable-' to the package name. So if you're adding more packages,
-# namespace the GITSRC correctly. Sorry. Check out the default theme makefile
-# for an example of how to add a package as part of a theme. It also uses
-# the GITBRANCH_ var to use 'main' instead of 'master'
-IMMUTABLEPACKAGES=core
-#GITSRC_immutable-core=https://github.com/phonebocx/pbxpackage-core.git
-GITSRC_immutable-core=git@github.com:phonebocx/pbxpackage-core.git
-
-# If there's a Makefile in the themedir, include that. It will want to clobber or add things
-include $(wildcard $(THEMEDIR)/Makefile)
-
-THEMEDESTFILES += $(addprefix $(THEMEDESTDIR)/,$(THEMEFILES))
-
-PREREQS += $(SRCDIR)/live.list.chroot $(SRCDIR)/phonebocx.key.chroot $(SRCDIR)/phonebocx.sources $(THEMEDESTFILES)
-
-# This is added to by the kernel and dahditools includes, at time of writing.
+# This is added to by (at least) the Makefile.kernel and Makefile.dahditools
 .PHONY: debs
 debs:
 	@echo "Debs to be built and added to the iso are $(ISODEBS)"
 export ISODEBS
 
+# $(PKGDESTDIR)/packages.json is a phony target, and will always run. This
+# stages to $(SRCDIR)/packages/$pkgname, and compiles the folders in there
+# into $(PKGDESTDIR) (on the OTHER volume, hopefully), which is then imported
+# by build-live-iso. I didn't want to faff around with recursive dependancies
+# when rsync will do the job perfectly!
 .PHONY: iso
-iso: setup $(ISODEBS) $(PKGDESTDIR)/packages.json /usr/lib/live/build/binary_grub-efi
+iso: setup $(THEMEDESTFILES) $(ISODEBS) $(PKGDESTDIR)/packages.json /usr/lib/live/build/binary_grub-efi
 	./build-live-iso.sh
 
 # Hack to replace /usr/lib/live/build/binary_grub-efi with a patched one
@@ -55,108 +37,10 @@ iso: setup $(ISODEBS) $(PKGDESTDIR)/packages.json /usr/lib/live/build/binary_gru
 /usr/lib/live/build/binary_grub-efi: $(BUILDROOT)/components/binary_grub-efi
 	cp $< $@
 
-.PHONY: theme
-theme:
-	@echo "Recreating theme files $(THEMEFILES)"
-	@rm -f $(THEMEDESTFILES)
-	@$(MAKE) setup
-
-DEVPACKAGES=
-# This copies anything found in ../packages (hardcoded package dev dir) into
-# srcdir/packages, then uses the git helper to pull anything left over that
-# is in the IMMUTABLEPACKAGES var.
-.PHONY: packages $(PKGDESTDIR)/packages.json
-packages $(PKGDESTDIR)/packages.json:
-	@echo "Theme $(THEME) uses packages '$(IMMUTABLEPACKAGES)'"
-	@rm -rf $(PKGBUILDDIR); mkdir -p $(PKGBUILDDIR)
-	@if [ "$(DEVPACKAGES)" ]; then echo "Building with dev packages"; \
-		DEV="$(realpath $(wildcard ../packages/*))"; \
-		if [ "$$DEV" ]; then \
-			for devpack in $$DEV; do \
-				echo "Found Dev package $$devpack, installing to $(PKGBUILDDIR)"; \
-				rsync -a $$devpack $(PKGBUILDDIR)/; \
-			done; \
-		fi; \
-	fi
-	@for ipack in $(IMMUTABLEPACKAGES); do if [ ! -d "$(PKGBUILDDIR)/$$ipack" ]; then \
-		echo "Installing package $$ipack"; \
-		$(MAKE) $(SRCDIR)/immutable-$$ipack/.git; \
-		[ -e $(SRCDIR)/immutable-$$ipack/meta/packagename ] && rsync -a $(SRCDIR)/immutable-$$ipack/ $(PKGBUILDDIR)/$$ipack || echo "Error - No meta/packagename in $(SRCDIR)/immutable-$$ipack, skipping"; \
-	fi; done
-	@rm -rf $(PKGBUILDDIR)/*/.git* $(PKGDESTDIR)
-	./build-packages.php --force --dest=$(PKGDESTDIR)
-
-###
-### Default theme generators. Any OTHER generators added by a theme will need to be
-### added to that themes Makefile, to stop the wget helper trying to download it
-### and failing
-###
-
-THEMEVARS=$(SRCDIR)/themevars
-# This is always run to generate the variables for this theme. It takes
-# everything from defaultvars, and then overwrites them using any variables
-# provided by the theme.
-.PHONY: $(THEMEVARS)
-$(THEMEVARS):
-	@rm -rf $@; mkdir -p $@
-	@cp $(DEFAULTTHEMEDIR)/distrovars/* $@/
-	@if [ "$(THEME)" != "default" ]; then \
-		[ -d "$(THEMEDIR)/distrovars" ] && cp $(THEMEDIR)/distrovars/* $@/; \
-	fi
-
-# Always rebuild this, as this is the base that everything else uses
-.PHONY: $(THEMEDESTDIR)/includes.chroot/distro/distrovars.json
-$(THEMEDESTDIR)/includes.chroot/distro/distrovars.json: $(THEMEDIR)/distroname $(THEMEDESTDIR)/includes.chroot/distro/shortname $(THEMEVARS)
-	@mkdir -p $(@D)
-	@echo -n '{"kernelver":"$(KERNELVER)","buildver":"$(BUILD)",' > $@
-	@for x in $^ $(wildcard $(THEMEVARS)/*); do \
-		[ -f $$x ] && echo -n "\"$$(basename $$x)\":\"$$(head -1 $$x)\"," >> $@; \
-	done
-	@echo '"buildutime":$(BUILDUTIME),"timestamp":"$(shell date -R --date="@$(BUILDUTIME)")"}' >> $@
-
-# Copy chroot to distro. Can't use a wildcard for this, as the prereq above must be a PHONY
-$(THEMEDESTDIR)/includes.binary/distro/distrovars.json: $(THEMEDESTDIR)/includes.chroot/distro/distrovars.json
-	@mkdir -p $(@D)
-	@cp $< $@
-
-$(THEMEDESTDIR)/includes.%/distro/distrovars.sh: $(THEMEDESTDIR)/includes.chroot/distro/distrovars.json
-	@jq -r 'to_entries | .[] | .key + "=" + (.value | @sh)' < $< > $@
-
-$(THEMEDESTDIR)/includes.%/distro/distroversion:  $(THEMEDESTDIR)/includes.chroot/distro/distrovars.json
-	@mkdir -p $(@D)
-	@printf "$$($(THEMEVERSIONGEN) < $<)" > $@
-
-$(THEMEDESTDIR)/includes.chroot/distro/shortname: $(THEMEDIR)/shortname
-	@mkdir -p $(@D)
-	@sed -s 's/__BUILD__/$(BUILD)/' < $< | head -1 > $@
-	@LEN=$$(cat $@ | wc -c); if [ "$$LEN" -gt 20 ]; then \
-		echo "Shortname too long. It's $$LEN, fix $<"; \
-		rm -f $@; \
-	else \
-		echo "MOTD String Length is $$LEN, all good"; \
-	fi
-
-$(THEMEDESTDIR)/includes.binary/distro/shortname: $(THEMEDESTDIR)/includes.chroot/distro/shortname
-	@mkdir -p $(@D)
-	@cp $< $@
-
-$(THEMEDESTDIR)/includes.chroot/etc/motd: $(THEMEDESTDIR)/includes.chroot/distro/shortname $(THEMEDESTDIR)/includes.chroot/distro/distroversion
-	@mkdir -p $(@D)
-	@toilet -F metal:border -f pagga "$(shell cat $<)" > $@
-	@cat $(THEMEDESTDIR)/includes.chroot/distro/distroversion >> $@
-
-$(THEMEDESTDIR)/includes.chroot/etc/issue: $(THEMEDESTDIR)/includes.chroot/distro/shortname
-	@mkdir -p $(@D)
-	@echo -e "$(shell cat $<) - \\l\n" > $@
-
-$(THEMEDESTDIR)/includes.chroot/etc/issue.net: $(THEMEDESTDIR)/includes.chroot/distro/shortname
-	@mkdir -p $(@D)
-	@echo -e "$(shell cat $<)\n" >$@
-
-$(THEMEDESTDIR)/includes.binary/distro/%.png: $(SRCDIR)/%.png
+$(STAGING)/archives/%: src/%
 	@mkdir -p $(@D)
 	cp $< $@
 
-$(THEMEDESTDIR)/includes.chroot/distro/%.png: $(SRCDIR)/%.png
+$(REPOSRCDEST): src/phonebocx.sources
 	@mkdir -p $(@D)
 	cp $< $@

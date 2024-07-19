@@ -86,7 +86,7 @@ function rebuild_pkg($srcdir, $outfile)
 	if (file_exists($outfile)) {
 		unlink($outfile);
 	}
-	$cmd = "mksquashfs $srcdir $outfile -all-root -no-xattrs";
+	$cmd = "mksquashfs $srcdir $outfile -all-root -no-xattrs -e .git";
 	exec($cmd, $output, $ret);
 	// print "$cmd exited with $ret\n";
 	chmod($outfile, 0777);

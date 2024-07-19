@@ -1,0 +1,107 @@
+# This makefile MUST be included after splash, but before liveiso
+TOOLS += jq
+
+# Important - to avoid namespace collisions, the package installer below
+# prepends 'immutable-' to the package name. So if you're adding more packages,
+# namespace the GITSRC correctly. Sorry. Check out the default theme makefile
+# for an example of how to add a package as part of a theme. It also uses
+# the GITBRANCH_ var to use 'main' instead of 'master'
+IMMUTABLEPACKAGES=core
+#GITSRC_immutable-core=https://github.com/phonebocx/pbxpackage-core.git
+GITSRC_immutable-core=git@github.com:phonebocx/pbxpackage-core.git
+
+# These go into both live and binary. ALLSPLASHPNGS comes from Makefile.001-splash
+DISTROFILES=shortname distrovars.json distrovars.sh distroversion $(notdir $(ALLSPLASHPNGS))
+
+THEMEFILES= $(addprefix includes.chroot/distro/,$(DISTROFILES)) \
+	$(addprefix includes.binary/distro/,$(DISTROFILES)) \
+	includes.chroot/etc/motd includes.chroot/etc/issue includes.chroot/etc/issue.net
+
+# If there's a Makefile in the themedir, include that. It will want to clobber or add things
+include $(wildcard $(THEMEDIR)/Makefile)
+
+# What is used to create the last line of the MOTD, if it was not set in the theme Makefile
+THEMEVERSIONGEN ?= jq -r '"\(.distroname) Build \(.buildver) using Linux \(.kernelver)\nBuild Timestamp: \(.timestamp)\n"'
+
+THEMEDESTFILES += $(addprefix $(STAGING)/,$(THEMEFILES))
+
+PREREQS += $(SRCDIR)/live.list.chroot $(SRCDIR)/phonebocx.key.chroot $(SRCDIR)/phonebocx.sources $(THEMEDESTFILES)
+
+.PHONY: theme themeupdate
+theme:
+	@echo "Recreating theme files $(THEMEFILES)"
+	@rm -f $(THEMEDESTFILES)
+	@$(MAKE) $(THEMEDESTFILES)
+
+# Only useful if the theme is a repoo
+themeupdate: $(REPOTHEMEGIT)
+	@echo REPOTHEMEGIT is set to '$(REPOTHEMEGIT)'
+
+THEMEVARS=$(SRCDIR)/themevars
+# This is always run to generate the variables for this theme. It takes
+# everything from defaultvars, and then overwrites them using any variables
+# provided by the theme.
+.PHONY: $(THEMEVARS)
+$(THEMEVARS):
+	@rm -rf $@; mkdir -p $@
+	@cp $(DEFAULTTHEMEDIR)/distrovars/* $@/
+	@if [ "$(THEME)" != "default" ]; then \
+		[ -d "$(THEMEDIR)/distrovars" ] && cp $(THEMEDIR)/distrovars/* $@/; \
+	fi
+
+# Always rebuild this, as this is the base that everything else uses
+.PHONY: $(STAGING)/includes.chroot/distro/distrovars.json
+$(STAGING)/includes.chroot/distro/distrovars.json: $(THEMEDIR)/distroname $(STAGING)/includes.chroot/distro/shortname $(THEMEVARS)
+	@mkdir -p $(@D)
+	@echo -n '{"kernelver":"$(KERNELVER)","buildver":"$(BUILD)",' > $@
+	@for x in $^ $(wildcard $(THEMEVARS)/*); do \
+		[ -f $$x ] && echo -n "\"$$(basename $$x)\":\"$$(head -1 $$x)\"," >> $@; \
+	done
+	@echo '"buildutime":$(BUILDUTIME),"timestamp":"$(shell date -R --date="@$(BUILDUTIME)")"}' >> $@
+
+# Copy chroot to distro. Can't use a wildcard for this, as the prereq above must be a PHONY
+$(STAGING)/includes.binary/distro/distrovars.json: $(STAGING)/includes.chroot/distro/distrovars.json
+	@mkdir -p $(@D)
+	@cp $< $@
+
+$(STAGING)/includes.%/distro/distrovars.sh: $(STAGING)/includes.chroot/distro/distrovars.json
+	@jq -r 'to_entries | .[] | .key + "=" + (.value | @sh)' < $< > $@
+
+$(STAGING)/includes.%/distro/distroversion:  $(STAGING)/includes.chroot/distro/distrovars.json
+	@mkdir -p $(@D)
+	@printf "$$($(THEMEVERSIONGEN) < $<)" > $@
+
+$(STAGING)/includes.chroot/distro/shortname: $(THEMEDIR)/shortname
+	@mkdir -p $(@D)
+	@sed -s 's/__BUILD__/$(BUILD)/' < $< | head -1 > $@
+	@LEN=$$(cat $@ | wc -c); if [ "$$LEN" -gt 20 ]; then \
+		echo "Shortname too long. It's $$LEN, fix $<"; \
+		rm -f $@; \
+	else \
+		echo "MOTD String Length is $$LEN, all good"; \
+	fi
+
+$(STAGING)/includes.binary/distro/shortname: $(STAGING)/includes.chroot/distro/shortname
+	@mkdir -p $(@D)
+	@cp $< $@
+
+$(STAGING)/includes.chroot/etc/motd: $(STAGING)/includes.chroot/distro/shortname $(STAGING)/includes.chroot/distro/distroversion
+	@mkdir -p $(@D)
+	@toilet -F metal:border -f pagga "$(shell cat $<)" > $@
+	@cat $(STAGING)/includes.chroot/distro/distroversion >> $@
+
+$(STAGING)/includes.chroot/etc/issue: $(STAGING)/includes.chroot/distro/shortname
+	@mkdir -p $(@D)
+	@echo -e "$(shell cat $<) - \\l\n" > $@
+
+$(STAGING)/includes.chroot/etc/issue.net: $(STAGING)/includes.chroot/distro/shortname
+	@mkdir -p $(@D)
+	@echo -e "$(shell cat $<)\n" >$@
+
+$(STAGING)/includes.binary/distro/%.png: $(SRCDIR)/%.png
+	@mkdir -p $(@D)
+	@cp $< $@
+
+$(STAGING)/includes.chroot/distro/%.png: $(SRCDIR)/%.png
+	@mkdir -p $(@D)
+	@cp $< $@

@@ -14,7 +14,8 @@ $ret['buildenv'] = [];
 foreach ($vars as $v) {
     $ret['buildenv'][$v] = $e[$v] ?? "__unset__";
 }
-$pj = json_decode(file_get_contents("$basedir/src/packages/packages.json"), true);
+$pdd = $e['PKGDESTDIR'];
+$pj = json_decode(file_get_contents("$pdd/packages.json"), true);
 $ret['packages'] = $pj;
 print json_encode($ret) . "\n";
 

@@ -3,7 +3,9 @@
 # Splash needs rsvg-convert
 TOOLS += rsvg-convert
 PKG_rsvg-convert = librsvg2-bin
-RELEASE=dev
+
+# Default to 'dev' if we don't already have a RELEASE
+RELEASE ?= dev
 
 # This splash is what is displayed on an installed system
 SPLASHSVG=$(SRCDIR)/splash_edited.svg
@@ -24,14 +26,15 @@ THEMEFONTDESTS=$(addprefix /usr/share/fonts/truetype/,$(THEMEFONTS))
 
 PREREQS += $(SPLASHPNG)
 
+# Copy any fonts needed into the local machine
 /usr/share/fonts/truetype/%.ttf: $(THEMEDIR)/%.ttf
 	@mkdir -p $(@D)
 	@cp $< $@
 
 .PHONY: splash
 splash:
-	rm -f $(SPLASHSVG) $(LIVESPLASHSVG)
-	$(MAKE) $(SPLASHPNG) $(LIVESPLASHPNG)
+	rm -f $(ALLSPLASHPNGS)
+	$(MAKE) $(ALLSPLASHPNGS)
 
 $(SPLASHSVG): $(THEMEDIR)/splashsrc.svg
 	sed -e 's/__BUILD__/$(BUILD)/' -e 's/@RELEASE@/$(RELEASE)/' -e 's/@ARCHITECTURE@/amd64/' < $< > $@

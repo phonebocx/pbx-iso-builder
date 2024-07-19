@@ -1,0 +1,33 @@
+# This is included very early in the main makefile
+# to process any theme settings.
+
+# If your theme comes from git, set THEMEREPO
+#THEMEREPO=http://herp.dep.com/blah/wibble.git
+
+ifdef THEMEREPO
+REPOTHEME = $(notdir $(basename $(THEMEREPO)))
+REPOTHEMEDIR = $(BUILDROOT)/theme-$(REPOTHEME)
+REPOTHEMEGIT = $(REPOTHEMEDIR)/.git
+# If it hasn't been downloaded...
+ifeq ($(wildcard $(REPOTHEMEGIT)),)
+# And we haven't been TOLD to download it, emit a warning
+ifndef THEMEDOWNLOAD
+$(warning Theme dir does not exist at $(REPOTHEMEDIR), you must run 'THEMEDOWNLOAD=true make setup')
+else
+# We HAVE been told to download it, so add it to prereqs
+GITSRC_theme-$(REPOTHEME)=$(THEMEREPO)
+PREREQS += $(REPOTHEMEGIT)
+endif # ifndef THEMEDOWNLOAD
+else
+# The repo HAS been downloaded, we can trust it.
+THEME = $(REPOTHEME)
+THEMEDIR = $(REPOTHEMEDIR)
+endif
+endif # ifdef THEMEREPO
+
+# Finally, actually set THEME and THEMEDIR if it wasn't set above or by env vars
+THEME ?= default
+THEMEDIR ?= $(BUILDROOT)/theme/$(THEME)
+export THEME THEMEDIR
+
+# There's also includes/Makefile.002-theme which provides 'make themeupdate'

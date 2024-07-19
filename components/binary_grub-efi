@@ -8,6 +8,10 @@
 ## This is free software, and you are welcome to redistribute it
 ## under certain conditions; see COPYING for details.
 
+# XXXX MODIFIED BY PhoneBo.cx XXXX
+# This has been manually overwritten, adding a single line below.
+# Search for 'XXXX' if you need to upgrade this in the future, and
+# copy and paste that line into the replacement file.
 
 set -e
 
@@ -48,16 +52,16 @@ Check_crossarchitectures
 
 # Checking depends
 case "${LB_ARCHITECTURE}" in
-	amd64|i386)
-		Check_package chroot /usr/lib/grub/x86_64-efi/configfile.mod grub-efi-amd64-bin
-		Check_package chroot /usr/lib/grub/i386-efi/configfile.mod grub-efi-ia32-bin
-		;;
-	arm64)
-		Check_package chroot /usr/lib/grub/arm64-efi/configfile.mod grub-efi-arm64-bin
-		;;
-	armhf)
-		Check_package chroot /usr/lib/grub/arm-efi/configfile.mod grub-efi-arm-bin
-		;;
+amd64 | i386)
+	Check_package chroot /usr/lib/grub/x86_64-efi/configfile.mod grub-efi-amd64-bin
+	Check_package chroot /usr/lib/grub/i386-efi/configfile.mod grub-efi-ia32-bin
+	;;
+arm64)
+	Check_package chroot /usr/lib/grub/arm64-efi/configfile.mod grub-efi-arm64-bin
+	;;
+armhf)
+	Check_package chroot /usr/lib/grub/arm-efi/configfile.mod grub-efi-arm-bin
+	;;
 esac
 Check_package chroot /usr/bin/grub-mkimage grub-common
 Check_package chroot /usr/bin/mcopy mtools
@@ -67,60 +71,59 @@ Check_package chroot /sbin/mkfs.msdos dosfstools
 # By default (auto) do a best-effort build: if the signed binaries are available use
 # them, but don't fail if they are not, just print a warning.
 case "${LB_ARCHITECTURE}" in
-	amd64)
-		_SB_EFI_PLATFORM="x86_64"
-		_SB_EFI_NAME="x64"
-		_SB_EFI_DEB="amd64"
-		;;
-	i386)
-		_SB_EFI_PLATFORM="i386"
-		_SB_EFI_NAME="ia32"
-		_SB_EFI_DEB="ia32"
-		;;
-	arm64)
-		_SB_EFI_PLATFORM="arm64"
-		_SB_EFI_NAME="aa64"
-		_SB_EFI_DEB="arm64"
-		;;
-	armhf)
-		_SB_EFI_PLATFORM="arm"
-		_SB_EFI_NAME="arm"
-		_SB_EFI_DEB="arm"
-		;;
+amd64)
+	_SB_EFI_PLATFORM="x86_64"
+	_SB_EFI_NAME="x64"
+	_SB_EFI_DEB="amd64"
+	;;
+i386)
+	_SB_EFI_PLATFORM="i386"
+	_SB_EFI_NAME="ia32"
+	_SB_EFI_DEB="ia32"
+	;;
+arm64)
+	_SB_EFI_PLATFORM="arm64"
+	_SB_EFI_NAME="aa64"
+	_SB_EFI_DEB="arm64"
+	;;
+armhf)
+	_SB_EFI_PLATFORM="arm"
+	_SB_EFI_NAME="arm"
+	_SB_EFI_DEB="arm"
+	;;
 esac
 
 _PRE_SB_PACKAGES="${_LB_PACKAGES}"
 _LB_PACKAGES="shim-signed grub-efi-${_SB_EFI_DEB}-signed"
 case "${LB_UEFI_SECURE_BOOT}" in
-	auto)
-		# Use Check_installed, as Check_package will error out immediately
-		set +e
-		Install_packages
-		set -e
-		Check_installed chroot /usr/lib/grub/${_SB_EFI_PLATFORM}-efi-signed/gcd${_SB_EFI_NAME}.efi.signed \
-			grub-efi-${_SB_EFI_DEB}-signed
-		_GRUB_INSTALL_STATUS="${INSTALL_STATUS}"
-		Check_installed chroot /usr/lib/shim/shim${_SB_EFI_NAME}.efi.signed \
-			shim-signed
+auto)
+	# Use Check_installed, as Check_package will error out immediately
+	set +e
+	Install_packages
+	set -e
+	Check_installed chroot /usr/lib/grub/${_SB_EFI_PLATFORM}-efi-signed/gcd${_SB_EFI_NAME}.efi.signed \
+		grub-efi-${_SB_EFI_DEB}-signed
+	_GRUB_INSTALL_STATUS="${INSTALL_STATUS}"
+	Check_installed chroot /usr/lib/shim/shim${_SB_EFI_NAME}.efi.signed \
+		shim-signed
 
-		if [ "${INSTALL_STATUS}" -ne 0 -o "${_GRUB_INSTALL_STATUS}" -ne 0 ]
-		then
-			Echo_warning "UEFI Secure Boot disabled due to missing signed Grub/Shim."
-		else
-			Echo_message "UEFI Secure Boot support enabled."
-		fi
-		;;
-	enable)
-		Check_package chroot /usr/lib/grub/${_SB_EFI_PLATFORM}-efi-signed/gcd${_SB_EFI_NAME}.efi.signed \
-			grub-efi-${_SB_EFI_DEB}-signed
-		Check_package chroot /usr/lib/shim/shim${_SB_EFI_NAME}.efi.signed \
-			shim-signed
-		Install_packages
+	if [ "${INSTALL_STATUS}" -ne 0 -o "${_GRUB_INSTALL_STATUS}" -ne 0 ]; then
+		Echo_warning "UEFI Secure Boot disabled due to missing signed Grub/Shim."
+	else
 		Echo_message "UEFI Secure Boot support enabled."
-		;;
-	disable)
-		Echo_message "UEFI Secure Boot support disabled."
-		;;
+	fi
+	;;
+enable)
+	Check_package chroot /usr/lib/grub/${_SB_EFI_PLATFORM}-efi-signed/gcd${_SB_EFI_NAME}.efi.signed \
+		grub-efi-${_SB_EFI_DEB}-signed
+	Check_package chroot /usr/lib/shim/shim${_SB_EFI_NAME}.efi.signed \
+		shim-signed
+	Install_packages
+	Echo_message "UEFI Secure Boot support enabled."
+	;;
+disable)
+	Echo_message "UEFI Secure Boot support disabled."
+	;;
 esac
 _LB_PACKAGES="${_PRE_SB_PACKAGES}"
 
@@ -135,22 +138,22 @@ rm -rf binary/boot/efi.img binary/boot/grub/i386-efi/ binary/boot/grub/x86_64-ef
 
 # This is workaround till both efi-image and grub-cpmodules are put into a binary package
 case "${LB_BUILD_WITH_CHROOT}" in
-	true)
-		if [ ! -e "${LIVE_BUILD}" ] ; then
-			LIVE_BUILD_PATH="/usr/lib/live/build"
-		else
-			LIVE_BUILD_PATH="${LIVE_BUILD}/scripts/build"
-		fi
-		mkdir -p chroot/${LIVE_BUILD_PATH}
-		cp "${LIVE_BUILD_PATH}/efi-image" "chroot/${LIVE_BUILD_PATH}"
-		cp "${LIVE_BUILD_PATH}/grub-cpmodules" "chroot/${LIVE_BUILD_PATH}"
+true)
+	if [ ! -e "${LIVE_BUILD}" ]; then
+		LIVE_BUILD_PATH="/usr/lib/live/build"
+	else
+		LIVE_BUILD_PATH="${LIVE_BUILD}/scripts/build"
+	fi
+	mkdir -p chroot/${LIVE_BUILD_PATH}
+	cp "${LIVE_BUILD_PATH}/efi-image" "chroot/${LIVE_BUILD_PATH}"
+	cp "${LIVE_BUILD_PATH}/grub-cpmodules" "chroot/${LIVE_BUILD_PATH}"
 
-		_CHROOT_DIR=""
-		;;
+	_CHROOT_DIR=""
+	;;
 
-	false)
-		_CHROOT_DIR="chroot"
-		;;
+false)
+	_CHROOT_DIR="chroot"
+	;;
 esac
 #####
 cat >binary.sh <<END
@@ -268,7 +271,7 @@ blocks=\$(((\$size / 1024 + 55) / 32 * 32 ))
 
 rm -f ${_CHROOT_DIR}/grub-efi-temp/boot/grub/efi.img
 # The VOLID must be (truncated to) a 32bit hexadecimal number
-mkfs.msdos -C "${_CHROOT_DIR}/grub-efi-temp/boot/grub/efi.img" \$blocks -i $(printf "%08x" $((${SOURCE_DATE_EPOCH}%4294967296))) >/dev/null
+mkfs.msdos -C "${_CHROOT_DIR}/grub-efi-temp/boot/grub/efi.img" \$blocks -i $(printf "%08x" $((${SOURCE_DATE_EPOCH} % 4294967296))) >/dev/null
 mmd -i "${_CHROOT_DIR}/grub-efi-temp/boot/grub/efi.img" ::EFI
 mmd -i "${_CHROOT_DIR}/grub-efi-temp/boot/grub/efi.img" ::EFI/boot
 mcopy -m -o -i "${_CHROOT_DIR}/grub-efi-temp/boot/grub/efi.img" ${_CHROOT_DIR}/grub-efi-temp/EFI/boot/*.efi \
@@ -281,26 +284,26 @@ mcopy -m -o -i "${_CHROOT_DIR}/grub-efi-temp/boot/grub/efi.img" ${_CHROOT_DIR}/g
 END
 
 case "${LB_BUILD_WITH_CHROOT}" in
-	true)
-		mv binary.sh chroot/
-		Chroot chroot "sh binary.sh"
-		rm -f chroot/binary.sh
+true)
+	mv binary.sh chroot/
+	Chroot chroot "sh binary.sh"
+	rm -f chroot/binary.sh
 
-		# Saving cache
-		Save_package_cache binary
+	# Saving cache
+	Save_package_cache binary
 
-		# Removing depends. Some bootloader packages are marked as Protected/Important
-		# in Ubuntu, so temporarily add an apt flag to allow them to be removed
-		PRE_APT_OPTIONS="${APT_OPTIONS}"
-		APT_OPTIONS="${APT_OPTIONS} --allow-remove-essential"
-		Remove_packages
-		APT_OPTIONS="${PRE_APT_OPTIONS}"
-		;;
+	# Removing depends. Some bootloader packages are marked as Protected/Important
+	# in Ubuntu, so temporarily add an apt flag to allow them to be removed
+	PRE_APT_OPTIONS="${APT_OPTIONS}"
+	APT_OPTIONS="${APT_OPTIONS} --allow-remove-essential"
+	Remove_packages
+	APT_OPTIONS="${PRE_APT_OPTIONS}"
+	;;
 
-	false)
-		sh binary.sh
-		rm -f binary.sh
-		;;
+false)
+	sh binary.sh
+	rm -f binary.sh
+	;;
 esac
 
 # Remove unnecessary files

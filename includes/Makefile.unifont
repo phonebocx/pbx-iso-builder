@@ -1,9 +1,14 @@
 UNIFONTREL=unifont-13.0.06
 UNIFONT=$(UNIFONTREL).ttf
 WGETURL_$(UNIFONT)=http://unifoundry.com/pub/unifont/$(UNIFONTREL)/font-builds/$(UNIFONT)
-UNIFONTDEST=$(SRCDIR)/$(UNIFONT)
+UFFONTDIR=$(STAGING)/includes.chroot/usr/share/fonts/truetype/
+UNIFONTDEST=$(UFFONTDIR)/$(UNIFONT)
 export UNIFONTDEST
 
 PREREQS += $(UNIFONTDEST)
+
+$(UFFONTDIR)/$(UNIFONT): $(SRCDIR)/$(UNIFONT)
+	@mkdir -p $(@D)
+	@cp $< $@
 
 

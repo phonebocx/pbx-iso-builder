@@ -1,0 +1,31 @@
+# Set DEVPACKAGES to a folder with development packages in it,
+# and they'll be included in the ISO. Leave it blank and it'll
+# only pull in the normal packages
+#DEVPACKAGES=/livebuild/packages
+DEVPACKAGES=
+
+# This copies anything found in ../packages (hardcoded package dev dir) into
+# srcdir/packages, then uses the git helper to pull anything left over that
+# is in the IMMUTABLEPACKAGES var.
+.PHONY: packages $(PKGDESTDIR)/packages.json
+packages $(PKGDESTDIR)/packages.json:
+	@echo "Theme $(THEME) uses packages '$(IMMUTABLEPACKAGES)'"
+	@rm -rf $(PKGBUILDDIR); mkdir -p $(PKGBUILDDIR)
+	@if [ "$(DEVPACKAGES)" ]; then echo "Building with dev packages"; \
+		DEV="$(realpath $(wildcard $(DEVPACKAGES)/*))"; \
+		if [ "$$DEV" ]; then \
+			for devpack in $$DEV; do \
+				if [ -e "$$devpack/meta/packagename" ]; then \
+					echo "Found Dev package $$devpack, installing to $(PKGBUILDDIR)"; \
+					rsync -a $$devpack $(PKGBUILDDIR)/; \
+				fi; \
+			done; \
+		fi; \
+	fi
+	@for ipack in $(IMMUTABLEPACKAGES); do if [ ! -d "$(PKGBUILDDIR)/$$ipack" ]; then \
+		echo "Installing package $$ipack"; \
+		$(MAKE) -s $(SRCDIR)/immutable-$$ipack/.git; \
+		[ -e $(SRCDIR)/immutable-$$ipack/meta/packagename ] && rsync -a $(SRCDIR)/immutable-$$ipack/ $(PKGBUILDDIR)/$$ipack || echo "Error - No meta/packagename in $(SRCDIR)/immutable-$$ipack, skipping"; \
+	fi; done
+	@rm -rf $(PKGDESTDIR)
+	./build-packages.php --force --dest=$(PKGDESTDIR) --pkgdir=$(PKGBUILDDIR)

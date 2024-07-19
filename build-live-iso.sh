@@ -2,7 +2,6 @@
 
 buildnum=1
 BUILD="$BRANCH-$(printf "%03d" $buildnum)"
-WORKSPACE=src/live-build-workspace
 DISTRO=bookworm
 
 echo -n "Creating $BUILD with kernel ${KERNELVER} - Debian $DISTRO "
@@ -16,10 +15,10 @@ else
 	export LB_FIRMWARE_BINARY=false
 fi
 
-mkdir -p ${WORKSPACE}
-echo "in ${WORKSPACE}"
+mkdir -p ${ISOBUILDROOT}
+echo "in ${ISOBUILDROOT}"
 
-cd ${WORKSPACE}
+cd ${ISOBUILDROOT}
 lb clean
 rm -rf config/ live-image-amd64.*
 
@@ -59,43 +58,24 @@ done
 cp ${LIVESPLASHLARGEPNG} config/bootloaders/syslinux_common/splash.png
 rm -f config/bootloaders/*/*.svg
 
-# All generated splash pngs are copied into includes.*/distro as part of the
-# theme generation in Makefile.liveiso
+# Rsync everything in LIVEBUILDSRC over the top of config. This is checked into
+# git, and is the same everywhere.
+rsync -a ${LIVEBUILDSRC}/ config/
 
-# Import our additional repositories
-cp ../*.list.* ../*.key.* config/archives
+# Then merge everything from staging over the top of that. This allows
+# staging to change things in the default LIVEBUILDROOT
+rsync -a ${STAGING}/ config/
 
-# Put the phonebocx source file inplace for testing
-srcdest=config/includes.chroot/etc/apt/sources.list.d
-mkdir -p $srcdest
-cp ../phonebocx.sources $srcdest
-
-# Merge anything we've put in liveconf across, which also overwrites
-# some of the bootloader config files
-rsync -av ${LIVECONF}/ config/
-
-# Put all our debs in place
+# Put all our debs in place. This isn't done as part of creating STAGING because
+# I didn't want to have to care about ordering everything.
 mkdir -p config/packages.chroot
 cp ${ISODEBS} config/packages.chroot/
 echo "Debs to be injected onto iso:"
 ls -l config/packages.chroot/
 
-UF=${UNIFONTDEST}
-if [ ! -e $UF ]; then
-	echo Unifont file $UF does not exist, fix the makefile
-	exit
-fi
-
-mkdir -p config/includes.chroot/usr/share/fonts/truetype/
-cp $UF config/includes.chroot/usr/share/fonts/truetype/
-
-# Now merge the pbxboot directory in
-rsync -av ../../pbxboot/ config/
-
-# The immutable packages are only in the iso, not the live image. They're
-# placed in the 'live' folder so the 9991 initram hook can find them.
+# Copy our squashed packages into /live/ on the ISO (only)
 mkdir -p config/includes.binary/live
-rsync -av ../packages config/includes.binary/live
+rsync -a ${PKGDESTDIR}/ config/includes.binary/live
 
 # If we have UEFI binaries, copy them in
 if [ "$UEFIBINS" ]; then
@@ -104,10 +84,8 @@ if [ "$UEFIBINS" ]; then
 	cp $UEFIBINS config/includes.chroot/boot/EFI
 fi
 
-# And finally embed the compiled theme and buildinfo
-rsync -av ${THEMEDESTDIR}/ config/
 BIOUT=config/includes.binary/distro/buildinfo.json
-../../components/gitinfo.php >$BIOUT
+$BUILDROOT/components/gitinfo.php >$BIOUT
 cp $BIOUT config/includes.chroot/distro/buildinfo.json
 
 lb build 2>&1 | tee build.log
