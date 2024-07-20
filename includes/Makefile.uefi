@@ -11,6 +11,8 @@ UEFIDEST=$(SRCDIR)/EFI
 UEFIBINS=$(addprefix $(UEFIDEST)/,Shell.efi Update.efi Defaults.efi)
 export UEFIBINS
 
+PREREQS += $(UEFIBINS)
+
 .PHONY: uefi
 uefi: $(UEFIBINS)
 
