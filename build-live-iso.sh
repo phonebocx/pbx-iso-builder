@@ -85,7 +85,7 @@ if [ "$UEFIBINS" ]; then
 fi
 
 BIOUT=config/includes.binary/distro/buildinfo.json
-$BUILDROOT/components/gitinfo.php >$BIOUT
+$COMPONENTS/gitinfo.php >$BIOUT
 cp $BIOUT config/includes.chroot/distro/buildinfo.json
 
 lb build 2>&1 | tee build.log

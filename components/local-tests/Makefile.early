@@ -1,0 +1,5 @@
+
+EARLYFORCEDERROR=
+ifdef EARLYFORCEDERROR
+$(error Error forced by setting EARLYFORCEDERROR in $(lastword $(MAKEFILE_LIST)))
+endif

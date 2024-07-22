@@ -38,6 +38,11 @@ LIVEBUILDSRC=$(BUILDROOT)/livebuild
 STAGING=$(SRCDIR)/staging
 export SRCDIR PKGBUILDDIR PKGDESTDIR DEBDEST LIVEBUILDSRC STAGING
 
+# Various misc components and tools that are checked into git but shouldn't
+# be in the root of this repo. Basically, just to keep things tidy.
+COMPONENTS=$(BUILDROOT)/components
+export COMPONENTS
+
 # Anything here can, and is, automatically made by the $(MKDIRS) target below
 # Other makefiles should add to this.
 MKDIRS = $(SRCDIR) $(DEBDEST) $(ISOBUILDROOT) $(PKGDESTDIR)
@@ -45,10 +50,18 @@ MKDIRS = $(SRCDIR) $(DEBDEST) $(ISOBUILDROOT) $(PKGDESTDIR)
 # Anything in prereqs is made by `make setup`
 PREREQS = $(MKDIRS)
 
+# This is only here for testing, to use local-tests instead
+LOCALDIR=$(SRCDIR)/local
+#LOCALDIR=$(COMPONENTS)/local-tests
+
+# If there is a local Makefile.early, include it before the theme
+# compiler, so it can configure things
+include $(wildcard $(LOCALDIR)/Makefile.early)
+
 # This is a setting-only makefile, to figure out what the theme
 # SHOULD be, and possibly download it if needed. This is included
 # early before anything else
-include $(BUILDROOT)/components/Makefile.theme
+include $(COMPONENTS)/Makefile.theme
 
 # If the theme has a settings makefile, include that to add
 # anything that might be needed by other includes. Currently
@@ -56,7 +69,9 @@ include $(BUILDROOT)/components/Makefile.theme
 include $(wildcard $(THEMEDIR)/Makefile.settings)
 
 # This is used in liveiso to take all the vars in default, and then
-# overwrite anything provided by the non-default theme
+# overwrite anything provided by the non-default theme.
+# This is a ?= setting just in case something ELSE wanted to override
+# it for some reasons.
 DEFAULTTHEMEDIR ?= $(BUILDROOT)/theme/default
 
 # Things that are always needed
@@ -72,6 +87,9 @@ halp: setup
 
 # Drag in any includes
 include $(wildcard includes/Makefile.*)
+
+# And if there is a Makefile.final in local, include that LAST
+include $(wildcard $(LOCALDIR)/Makefile.final)
 
 # This is anything that's in TOOLS or STOOLS
 PKGS=$(addprefix /usr/bin/,$(TOOLS))
