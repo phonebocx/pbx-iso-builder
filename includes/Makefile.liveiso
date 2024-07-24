@@ -27,14 +27,14 @@ export ISODEBS
 # by build-live-iso. I didn't want to faff around with recursive dependancies
 # when rsync will do the job perfectly!
 .PHONY: iso
-iso: setup $(THEMEDESTFILES) $(ISODEBS) $(PKGDESTDIR)/packages.json /usr/lib/live/build/binary_grub-efi
+iso: setup splash $(THEMEDESTFILES) $(ISODEBS) $(PKGDESTDIR)/packages.json /usr/lib/live/build/binary_grub-efi
 	./build-live-iso.sh
 
 # Hack to replace /usr/lib/live/build/binary_grub-efi with a patched one
 # that imports extra efi files into the efi.img dosfs. This should be done
 # CORRECTLY by either patching it on the fly, or even better, submitting a
 # patch upstream, but I'm out of spoons at the moment
-/usr/lib/live/build/binary_grub-efi: $(COMPONENTS)/binary_grub-efi
+/usr/lib/live/build/binary_grub-efi: $(ISOCOMPONENTS)/binary_grub-efi
 	cp $< $@
 
 $(STAGING)/archives/%: src/%

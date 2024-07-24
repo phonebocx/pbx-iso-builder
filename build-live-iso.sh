@@ -1,7 +1,5 @@
 #!/bin/bash
 
-buildnum=1
-BUILD="$BRANCH-$(printf "%03d" $buildnum)"
 DISTRO=bookworm
 
 echo -n "Creating $BUILD with kernel ${KERNELVER} - Debian $DISTRO "
@@ -73,9 +71,9 @@ cp ${ISODEBS} config/packages.chroot/
 echo "Debs to be injected onto iso:"
 ls -l config/packages.chroot/
 
-# Copy our squashed packages into /live/ on the ISO (only)
-mkdir -p config/includes.binary/live
-rsync -a ${PKGDESTDIR}/ config/includes.binary/live
+# Copy our squashed packages into /live/packages on the ISO (only)
+mkdir -p config/includes.binary/live/packages
+rsync -a ${PKGDESTDIR}/ config/includes.binary/live/packages/
 
 # If we have UEFI binaries, copy them in
 if [ "$UEFIBINS" ]; then
@@ -85,7 +83,7 @@ if [ "$UEFIBINS" ]; then
 fi
 
 BIOUT=config/includes.binary/distro/buildinfo.json
-$COMPONENTS/gitinfo.php >$BIOUT
+$ISOCOMPONENTS/gitinfo.php >$BIOUT
 cp $BIOUT config/includes.chroot/distro/buildinfo.json
 
 lb build 2>&1 | tee build.log

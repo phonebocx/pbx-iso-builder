@@ -3,9 +3,9 @@ BUILDROOT=$(shell pwd)
 BUILDUTIME=$(shell date +%s)
 BRANCH=$(shell date +%Y.%m)
 # TODO: Fix this
-BUILDNUM=1
+BUILDNUM=2
 BUILD=$(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
-export BRANCH BUILDNUM BUILDROOT BUILDUTIME
+export BUILD BRANCH BUILDNUM BUILDROOT BUILDUTIME
 
 # This is exported for use by the pbx-kernel-builder toolset
 KERNELVER=6.6.40
@@ -40,8 +40,8 @@ export SRCDIR PKGBUILDDIR PKGDESTDIR DEBDEST LIVEBUILDSRC STAGING
 
 # Various misc components and tools that are checked into git but shouldn't
 # be in the root of this repo. Basically, just to keep things tidy.
-COMPONENTS=$(BUILDROOT)/components
-export COMPONENTS
+ISOCOMPONENTS=$(BUILDROOT)/components
+export ISOCOMPONENTS
 
 # Anything here can, and is, automatically made by the $(MKDIRS) target below
 # Other makefiles should add to this.
@@ -52,7 +52,7 @@ PREREQS = $(MKDIRS)
 
 # This is only here for testing, to use local-tests instead
 LOCALDIR=$(SRCDIR)/local
-#LOCALDIR=$(COMPONENTS)/local-tests
+#LOCALDIR=$(ISOCOMPONENTS)/local-tests
 
 # If there is a local Makefile.early, include it before the theme
 # compiler, so it can configure things
@@ -61,7 +61,7 @@ include $(wildcard $(LOCALDIR)/Makefile.early)
 # This is a setting-only makefile, to figure out what the theme
 # SHOULD be, and possibly download it if needed. This is included
 # early before anything else
-include $(COMPONENTS)/Makefile.theme
+include $(ISOCOMPONENTS)/Makefile.theme
 
 # If the theme has a settings makefile, include that to add
 # anything that might be needed by other includes. Currently

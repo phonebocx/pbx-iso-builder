@@ -29,7 +29,8 @@ KVMVGA=-vga vmware
 # This doesn't work correctly for some reason. Will need to look into it later
 #SM=$(BUILDROOT)/components/smbios
 #SMBIOS=-acpitable file=$(SM)/SLIC -acpitable file=$(SM)/MSDM -smbios file=$(SM)/smbios_type_0.bin -smbios file=$(SM)/smbios_type_1.bin
-SMBIOS=
+TESTUUID=36e26dd9-91a0-4547-b197-bf28ce57cfe9
+SMBIOS=-smbios type=1,manufacturer=HonestRob,product=IsoTest,version=31337,serial=01189998819991197253,uuid=$(TESTUUID)
 
 src/testimg.qcow2: | src/$(UVARSNAME)
 	qemu-img create -f qcow2 src/testimg.qcow2 80G
@@ -46,5 +47,5 @@ ISOFILE=live-image-amd64.hybrid.iso
 ISODEST=$(ISOBUILDROOT)/$(ISOFILE)
 isotest: $(ISODEST) | src/testimg.qcow2
 	kvm -cpu $(KVMCPU) -accel kvm -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMNETCONF) $(KVMDISPLAY) \
-	-cdrom $< $(UEFIBOOT) -drive file=$| $(KVMVGA) $(SMBIOS)
+	-cdrom $< $(UEFIBOOT) -drive file=$|,cache=unsafe,discard=ignore,detect-zeroes=off $(KVMVGA) $(SMBIOS)
 

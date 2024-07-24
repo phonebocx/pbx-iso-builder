@@ -7,8 +7,8 @@ TOOLS += jq
 # for an example of how to add a package as part of a theme. It also uses
 # the GITBRANCH_ var to use 'main' instead of 'master'
 IMMUTABLEPACKAGES=core
-#GITSRC_immutable-core=https://github.com/phonebocx/pbxpackage-core.git
-GITSRC_immutable-core=git@github.com:phonebocx/pbxpackage-core.git
+GITSRC_immutable-core=https://github.com/phonebocx/pbxpackage-core.git
+#GITSRC_immutable-core=git@github.com:phonebocx/pbxpackage-core.git
 
 # These go into both live and binary. ALLSPLASHPNGS comes from Makefile.001-splash
 DISTROFILES=shortname distrovars.json distrovars.sh distroversion $(notdir $(ALLSPLASHPNGS))

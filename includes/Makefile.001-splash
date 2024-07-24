@@ -33,7 +33,7 @@ PREREQS += $(SPLASHPNG)
 
 .PHONY: splash
 splash:
-	rm -f $(ALLSPLASHPNGS)
+	rm -f $(ALLSPLASHPNGS) $(SPLASHSVG)
 	$(MAKE) $(ALLSPLASHPNGS)
 
 $(SPLASHSVG): $(THEMEDIR)/splashsrc.svg

@@ -3,4 +3,4 @@ src
 /theme/*
 !/theme/default
 packages
-local
+/local

@@ -1,0 +1,13 @@
+# This is from includes.chroot
+[Unit]
+Description=PhoneBo.cx Boot
+After=network.target
+ConditionPathExists=/usr/local/bin/phonebocx-boot.sh
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/phonebocx-boot.sh
+
+[Install]
+WantedBy=multi-user.target
+
