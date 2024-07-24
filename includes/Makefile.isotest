@@ -43,8 +43,7 @@ isoclean:
 	rm -f src/testimg.qcow2 src/OVMF*
 	$(MAKE) isotest
 
-ISOFILE=live-image-amd64.hybrid.iso
-ISODEST=$(ISOBUILDROOT)/$(ISOFILE)
+# ISODEST is from 002-theme
 isotest: $(ISODEST) | src/testimg.qcow2
 	kvm -cpu $(KVMCPU) -accel kvm -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMNETCONF) $(KVMDISPLAY) \
 	-cdrom $< $(UEFIBOOT) -drive file=$|,cache=unsafe,discard=ignore,detect-zeroes=off $(KVMVGA) $(SMBIOS)

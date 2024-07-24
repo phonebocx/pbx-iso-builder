@@ -36,6 +36,8 @@ LIVEBUILDSRC=$(BUILDROOT)/livebuild
 # This is the staging directory for anything that should be merged
 # on top of $(ISOBUILDROOT)/config in build-live-iso.sh
 STAGING=$(SRCDIR)/staging
+# Where isos are placed when built
+ISODEST=$(BUILDROOT)/isos
 export SRCDIR PKGBUILDDIR PKGDESTDIR DEBDEST LIVEBUILDSRC STAGING
 
 # Various misc components and tools that are checked into git but shouldn't

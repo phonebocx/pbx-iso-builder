@@ -21,13 +21,30 @@ debs:
 	@echo "Debs to be built and added to the iso are $(ISODEBS)"
 export ISODEBS
 
+# ISONAME defaults to $(THEME)-$(BUILD).iso in 002-theme
+ISOFINAL=$(ISODEST)/$(ISONAME)
+
+.PHONY: iso
+iso: $(ISOFINAL)
+
+# This is what is created by build-live-iso.sh
+BUILTISOFILE=live-image-amd64.hybrid.iso
+BUILTISODEST=$(ISOBUILDROOT)/$(BUILTISOFILE)
+
+# $(BUILTISODEST) is not a prereq at the moment
+$(ISOFINAL): # | $(BUILTISODEST)
+	@if [ ! -e "$(BUILTISODEST)" ]; then echo "run make reiso"; exit 9; fi
+	@echo "Here I am now $(BUILTISODEST)"
+	mkdir -p $(@D)
+	cp $(BUILTISODEST) $@
+
 # $(PKGDESTDIR)/packages.json is a phony target, and will always run. This
 # stages to $(SRCDIR)/packages/$pkgname, and compiles the folders in there
 # into $(PKGDESTDIR) (on the OTHER volume, hopefully), which is then imported
 # by build-live-iso. I didn't want to faff around with recursive dependancies
 # when rsync will do the job perfectly!
-.PHONY: iso
-iso: setup splash $(THEMEDESTFILES) $(ISODEBS) $(PKGDESTDIR)/packages.json /usr/lib/live/build/binary_grub-efi
+.PHONY: reiso
+reiso $(BUILTISODEST): setup splash $(THEMEDESTFILES) $(ISODEBS) $(PKGDESTDIR)/packages.json /usr/lib/live/build/binary_grub-efi
 	./build-live-iso.sh
 
 # Hack to replace /usr/lib/live/build/binary_grub-efi with a patched one
