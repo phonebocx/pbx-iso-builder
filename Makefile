@@ -3,7 +3,7 @@ BUILDROOT=$(shell pwd)
 BUILDUTIME=$(shell date +%s)
 BRANCH=$(shell date +%Y.%m)
 # TODO: Fix this
-BUILDNUM=2
+BUILDNUM=4
 BUILD=$(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
 export BUILD BRANCH BUILDNUM BUILDROOT BUILDUTIME
 
@@ -24,7 +24,7 @@ export COREBUILD ISOBUILDROOT
 # This is where things are staged.
 SRCDIR=$(BUILDROOT)/src
 # This is the directory that packages are staged to, before being squashfs'ed
-PKGBUILDDIR=$(SRCDIR)/src/packages
+PKGBUILDDIR=$(SRCDIR)/pkgbuild
 # This is the directory that is copied into /live/packages on the ISO
 PKGDESTDIR=$(COREBUILD)/packages
 # Any debs placed here get injected by build-live-iso.sh

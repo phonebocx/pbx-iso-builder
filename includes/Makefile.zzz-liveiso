@@ -21,19 +21,18 @@ debs:
 	@echo "Debs to be built and added to the iso are $(ISODEBS)"
 export ISODEBS
 
-# ISONAME defaults to $(THEME)-$(BUILD).iso in 002-theme
-ISOFINAL=$(ISODEST)/$(ISONAME)
-
+# ISOFINAL is from 002-theme, which sets ISONAME to $(THEME)-$(BUILD).iso and then puts it in $(ISODEST)
 .PHONY: iso
 iso: $(ISOFINAL)
 
 # This is what is created by build-live-iso.sh
-BUILTISOFILE=live-image-amd64.hybrid.iso
+BUILTISOFILE=$(BUILD)-amd64.hybrid.iso
 BUILTISODEST=$(ISOBUILDROOT)/$(BUILTISOFILE)
 
-# $(BUILTISODEST) is not a prereq at the moment
+# $(BUILTISODEST) is not a prereq at the moment, as we only want
+# to rebuild it if it's missing.
 $(ISOFINAL): # | $(BUILTISODEST)
-	@if [ ! -e "$(BUILTISODEST)" ]; then echo "run make reiso"; exit 9; fi
+	@if [ ! -e "$(BUILTISODEST)" ]; then echo "running make reiso"; make reiso; fi
 	@echo "Here I am now $(BUILTISODEST)"
 	mkdir -p $(@D)
 	cp $(BUILTISODEST) $@

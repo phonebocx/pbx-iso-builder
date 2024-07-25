@@ -29,6 +29,8 @@ PREREQS += $(SRCDIR)/live.list.chroot $(SRCDIR)/phonebocx.key.chroot $(SRCDIR)/p
 
 ISONAME ?= $(THEME)-$(BUILD).iso
 
+ISOFINAL ?= $(ISODEST)/$(ISONAME)
+
 .PHONY: theme themeupdate
 theme:
 	@echo "Recreating theme files $(THEMEFILES)"

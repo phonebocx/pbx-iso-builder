@@ -22,5 +22,4 @@ fi
 
 echo -e '\t* Add fastagi to /etc/services'
 sed -i '/fastagi/d' /etc/services
-echo 'fastagi         4573/tcp                        # Asterisk AGI' >> /etc/services
-
+echo 'fastagi         4573/tcp                        # Asterisk AGI' >>/etc/services

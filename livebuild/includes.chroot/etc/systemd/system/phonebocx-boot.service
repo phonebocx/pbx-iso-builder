@@ -1,4 +1,5 @@
-# This is from includes.chroot
+# This is from includes.chroot and should hopefully never need
+# to be updated
 [Unit]
 Description=PhoneBo.cx Boot
 After=network.target

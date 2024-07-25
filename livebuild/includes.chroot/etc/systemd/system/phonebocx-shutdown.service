@@ -1,0 +1,13 @@
+[Unit]
+Description=Shut down PhoneBo.cx
+DefaultDependencies=no
+After=final.target
+ConditionPathExists=/usr/local/bin/phonebocx-stop.sh
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/phonebocx-stop.sh
+
+[Install]
+WantedBy=final.target
+

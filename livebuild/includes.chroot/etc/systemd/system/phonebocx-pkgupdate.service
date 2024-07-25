@@ -1,0 +1,15 @@
+[Unit]
+Description=PhoneBo.cx Package Updater on tty4
+DefaultDependencies=no
+Conflicts=getty@tty4.service
+ConditionPathExists=/usr/local/bin/phonebocx-pkgupdate.sh
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/phonebocx-pkgupdate.sh
+StandardInput=tty
+StandardOutput=tty
+TTYPath=/dev/tty4
+
+
+
