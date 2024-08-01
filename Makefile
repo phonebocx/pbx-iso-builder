@@ -3,7 +3,7 @@ BUILDROOT=$(shell pwd)
 BUILDUTIME=$(shell date +%s)
 BRANCH=$(shell date +%Y.%m)
 # TODO: Fix this
-BUILDNUM=1
+BUILDNUM ?= 1
 BUILD=$(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
 export BUILD BRANCH BUILDNUM BUILDROOT BUILDUTIME
 
@@ -18,7 +18,7 @@ export KERNELVER KERNELREL KFIRMWARE
 # inside a full system chroot. Everything in here can be thrown away
 # without any consequences. I strongly suggest a different volume.
 # The faster the better.
-COREBUILD=/usr/local/build
+COREBUILD ?= /usr/local/build
 ISOBUILDROOT=$(COREBUILD)/live-build-workspace
 export COREBUILD ISOBUILDROOT
 
