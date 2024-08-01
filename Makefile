@@ -3,12 +3,12 @@ BUILDROOT=$(shell pwd)
 BUILDUTIME=$(shell date +%s)
 BRANCH=$(shell date +%Y.%m)
 # TODO: Fix this
-BUILDNUM=4
+BUILDNUM=1
 BUILD=$(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
 export BUILD BRANCH BUILDNUM BUILDROOT BUILDUTIME
 
 # This is exported for use by the pbx-kernel-builder toolset
-KERNELVER=6.6.40
+KERNELVER=6.6.43
 KERNELREL=1
 KFIRMWARE=20240610
 export KERNELVER KERNELREL KFIRMWARE
@@ -17,7 +17,8 @@ export KERNELVER KERNELREL KFIRMWARE
 # builder, to avoid things like vscode trying to explore everything
 # inside a full system chroot. Everything in here can be thrown away
 # without any consequences. I strongly suggest a different volume.
-COREBUILD=/buildroot
+# The faster the better.
+COREBUILD=/usr/local/build
 ISOBUILDROOT=$(COREBUILD)/live-build-workspace
 export COREBUILD ISOBUILDROOT
 
