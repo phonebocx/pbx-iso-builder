@@ -26,39 +26,22 @@ KVMVGA=-vga vmware
 # 'videoinfo' just hang. I found the tip here:
 #    https://askubuntu.com/questions/1234203/video-problems-with-efi-boot-on-kvm-qemu
 
-# This doesn't work correctly for some reason. Will need to look into it later
-#SM=$(BUILDROOT)/components/smbios
-#SMBIOS=-acpitable file=$(SM)/SLIC -acpitable file=$(SM)/MSDM -smbios file=$(SM)/smbios_type_0.bin -smbios file=$(SM)/smbios_type_1.bin
 TESTUUID=36e26dd9-91a0-4547-b197-bf28ce57cfe9
 SMBIOS=-smbios type=1,manufacturer=HonestRob,product=IsoTest,version=31337,serial=01189998819991197253,uuid=$(TESTUUID)
-HWSMBIOS=-smbios file=$(ISODEST)/atom.bin
 
-src/testimg.qcow2: | src/$(UVARSNAME)
+$(SRCDIR)/testimg.qcow2: | $(SRCDIR)/$(UVARSNAME)
 	qemu-img create -f qcow2 src/testimg.qcow2 80G
 
-src/OVMF_%.fd:
+$(SRCDIR)/OVMF_%.fd:
 	@cp /usr/share/OVMF/$(@F) $@
 
 .PHONY: isoclean isotest
 isoclean:
-	rm -f src/testimg.qcow2 src/OVMF*
+	rm -f $(SRCDIR)/testimg.qcow2 $(SRCDIR)/OVMF*
 	$(MAKE) isotest
 
 # ISOFINAL is from 002-theme
-isotest: $(ISOFINAL) | src/testimg.qcow2
+isotest: $(ISOFINAL) | $(SRCDIR)/testimg.qcow2
 	kvm -cpu $(KVMCPU) -accel kvm -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMNETCONF) $(KVMDISPLAY) \
 	-cdrom $< $(UEFIBOOT) -drive file=$|,cache=unsafe,discard=ignore,detect-zeroes=off $(KVMVGA) $(SMBIOS)
-
-mmctest: $(ISOFINAL) | $(ISODEST)/mmcblk1.raw
-	kvm -cpu $(KVMCPU) -accel kvm -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMNETCONF) $(KVMDISPLAY) \
-	-drive id=mmcblk,if=none,format=raw,file=$| -snapshot \
-	-device sdhci-pci -device sd-card,drive=mmcblk \
-	$(UEFIBOOT) $(KVMVGA) $(HWSMBIOS) -cdrom $<
-
-hwtest: $(ISOFINAL) | $(ISODEST)/mmcblk1.raw
-	kvm -cpu $(KVMCPU) -accel kvm -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMNETCONF) $(KVMDISPLAY) \
-	-drive format=raw,file=$| -snapshot \
-	$(UEFIBOOT) $(KVMVGA) $(HWSMBIOS) -cdrom $<
-
-
 

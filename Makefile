@@ -7,6 +7,9 @@ BUILDNUM ?= 1
 BUILD=$(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
 export BUILD BRANCH BUILDNUM BUILDROOT BUILDUTIME
 
+# Everything needs secondexpansion
+.SECONDEXPANSION:
+
 # This is exported for use by the pbx-kernel-builder toolset
 KERNELVER=6.6.43
 KERNELREL=1
