@@ -2,7 +2,8 @@
 
 . /usr/local/bin/phonebocx-init.sh
 
-ttyscript=$(get_script_loc $THISTTY)
+THISTTY=$(get_this_ttyname)
+ttyscript=$(get_script_loc core $THISTTY)
 if [ "$ttyscript" ]; then
     echo Launching $ttyscript
     sleep 5

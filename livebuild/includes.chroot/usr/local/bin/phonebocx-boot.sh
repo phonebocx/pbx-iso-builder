@@ -4,7 +4,7 @@
 
 echo $(date)": This is the boot script" >/dev/kmsg
 echo $(date)": Doing the needful"
-bootscript=$(get_script_loc boot)
+bootscript=$(get_script_loc core boot)
 if [ "$bootscript" ]; then
     echo Launching bootscript $bootscript
     sleep 5
