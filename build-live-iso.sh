@@ -18,7 +18,7 @@ echo "in ${ISOBUILDROOT}"
 
 cd ${ISOBUILDROOT}
 lb clean
-rm -rf config/ live-image-amd64.*
+rm -rf config/ *-amd64.*
 
 NAL=noautologin
 NAL=

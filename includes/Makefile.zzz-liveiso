@@ -32,7 +32,7 @@ BUILTISODEST=$(ISOBUILDROOT)/$(BUILTISOFILE)
 # $(BUILTISODEST) is not a prereq at the moment, as we only want
 # to rebuild it if it's missing.
 $(ISOFINAL): # | $(BUILTISODEST)
-	@if [ ! -e "$(BUILTISODEST)" ]; then echo "running make reiso"; make reiso; fi
+	@if [ ! -e "$(BUILTISODEST)" ]; then echo "running make $(BUILTISODEST)"; make $(BUILTISODEST); fi
 	@echo "Here I am now $(BUILTISODEST)"
 	mkdir -p $(@D)
 	cp $(BUILTISODEST) $@
@@ -43,7 +43,11 @@ $(ISOFINAL): # | $(BUILTISODEST)
 # by build-live-iso. I didn't want to faff around with recursive dependancies
 # when rsync will do the job perfectly!
 .PHONY: reiso
-reiso $(BUILTISODEST): setup splash $(THEMEDESTFILES) $(ISODEBS) $(PKGDESTDIR)/packages.json /usr/lib/live/build/binary_grub-efi
+reiso:
+	rm -f $(BUILTISODEST) $(ISOFINAL)
+	$(MAKE) $(ISOFINAL)
+
+$(BUILTISODEST): setup splash $(THEMEDESTFILES) $(ISODEBS) $(PKGDESTDIR)/packages.json /usr/lib/live/build/binary_grub-efi
 	./build-live-iso.sh
 
 # Hack to replace /usr/lib/live/build/binary_grub-efi with a patched one
