@@ -1,3 +1,5 @@
+TOOLS += rsync flex bison m4 bc
+
 KERNELDEB=linux-image-$(KERNELVER)-$(KERNELREL)_$(KERNELVER)-$(KERNELREL)_amd64.deb
 LIBCDEB=linux-libc-dev_$(KERNELVER)-$(KERNELREL)_amd64.deb
 HEADERSDEB=linux-headers-$(KERNELVER)-$(KERNELREL)_$(KERNELVER)-$(KERNELREL)_amd64.deb
@@ -15,6 +17,8 @@ $(KERNELDEBS): src/pbx-kernel-builder/kernel/$(KERNELDEB)
 	mkdir -p $(@D)
 	cp src/pbx-kernel-builder/kernel/$(@F) $@
 
-src/pbx-kernel-builder/kernel/$(KERNELDEB): src/pbx-kernel-builder/.git
+src/pbx-kernel-builder/kernel/$(KERNELDEB): src/pbx-kernel-builder/.git | /usr/lib/x86_64-linux-gnu/libelf.a
 	cd src/pbx-kernel-builder && make deb
 
+/usr/lib/x86_64-linux-gnu/libelf.a:
+	@apt-get -y install libelf-dev
