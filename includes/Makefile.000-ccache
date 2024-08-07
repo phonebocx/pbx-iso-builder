@@ -7,8 +7,12 @@ MKDIRS += $(CCACHEROOT)
 
 CCACHE_DIR=$(CCACHEROOT)/cachedir
 CCACHE_MAXSIZE=10G
-CCACHE_LOGFILE=$(CCACHEROOT)/ccache.logfile
-export CCACHE_DIR CCACHE_MAXSIZE CCACHE_LOGFILE
+CCACHE_STATSLOG=$(CCACHEROOT)/ccache.statslog
+export CCACHE_DIR CCACHE_MAXSIZE CCACHE_STATSLOG
+
+# Uncomment to enable
+#CCACHE_LOGFILE=$(CCACHEROOT)/ccache.logfile
+#export CCACHE_LOGFILE
 
 LOCALCOMPILERS=$(addprefix /usr/local/bin/,$(COMPILERS))
 
@@ -16,6 +20,7 @@ LOCALCOMPILERS=$(addprefix /usr/local/bin/,$(COMPILERS))
 ccache: | $(LOCALCOMPILERS)
 	@echo ccache is now enabled
 	@ccache --show-config
+	@[ -e "$(CCACHE_STATSLOG)" ] && ccache --show-log-stats || :
 
 $(LOCALCOMPILERS):
 	@ln -s /usr/bin/ccache $@
