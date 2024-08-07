@@ -1,4 +1,5 @@
-TOOLS += live-build
+TOOLS += live-build mksquashfs
+PKG_mksquashfs=squashfs-tools
 
 DEBMIRROR=http://mirror.aarnet.edu.au/debian/
 LIVECONF=$(shell pwd)/liveconf
