@@ -50,5 +50,7 @@ isotest: $(ISOFINAL) | $(SRCDIR)/testimg.qcow2 /etc/qemu/bridge.conf
 
 
 /etc/qemu/bridge.conf:
-	@echo 'QEMU needs to be set up correct. See Makefile.isotest for info'
+	@echo 'ERROR: '
+	@echo '  QEMU needs to be set up correctly on this host. See Makefile.isotest for guidelines'
+	@echo '  Sorry.'
 	@exit 99
