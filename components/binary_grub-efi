@@ -54,7 +54,7 @@ Check_crossarchitectures
 case "${LB_ARCHITECTURE}" in
 amd64 | i386)
 	Check_package chroot /usr/lib/grub/x86_64-efi/configfile.mod grub-efi-amd64-bin
-	Check_package chroot /usr/lib/grub/i386-efi/configfile.mod grub-efi-ia32-bin
+	#Check_package chroot /usr/lib/grub/i386-efi/configfile.mod grub-efi-ia32-bin
 	;;
 arm64)
 	Check_package chroot /usr/lib/grub/arm64-efi/configfile.mod grub-efi-arm64-bin
@@ -213,7 +213,7 @@ PATH="${PATH}:\${LIVE_BUILD_PATH}" # Make sure grub-cpmodules is used as if it w
 case "${LB_ARCHITECTURE}" in
 	amd64|i386)
 		gen_efi_boot_img "x86_64-efi" "x64" "debian-live/amd64"
-		gen_efi_boot_img "i386-efi" "ia32" "debian-live/i386"
+		# gen_efi_boot_img "i386-efi" "ia32" "debian-live/i386"
 		PATH="\${PRE_EFI_IMAGE_PATH}"
 		;;
 	arm64)
@@ -248,6 +248,7 @@ touch ${_CHROOT_DIR}/grub-efi-temp-cfg/grub.cfg -d@${SOURCE_DATE_EPOCH}
 
 # XXXX PATCH HERE XXXX
 cp -R boot/EFI/*efi ${_CHROOT_DIR}/grub-efi-temp/EFI/boot/
+rm -f ${_CHROOT_DIR}/grub-efi-temp/EFI/boot/bootia32.efi
 # That's the only thing changed in this file. Copy anything
 # already in boot/EFI into the dir that's going to be used
 # to build efi.img
