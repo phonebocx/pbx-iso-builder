@@ -18,7 +18,10 @@ PREREQS += $(STAGING)/archives/live.list.chroot $(STAGING)/archives/phonebocx.ke
 # This is hacky patch. See below.
 PREREQS += /usr/lib/live/build/binary_grub-efi
 
-# This is added to by (at least) the Makefile.kernel and Makefile.dahditools
+# This is added to by (at least) the Makefile.kernel and Makefile.dahditools. The sort is to simply
+# unique them. This is due to makefiles being included multiple times, which doesn't matter, but it
+# can cause some things to complain.
+ISODEBS=$(sort $(ALLISODEBS))
 .PHONY: debs
 debs:
 	@echo "Debs to be built and added to the iso are $(ISODEBS)"
