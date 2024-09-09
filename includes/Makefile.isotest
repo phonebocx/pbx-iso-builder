@@ -46,7 +46,7 @@ isoclean:
 # ISOFINAL is from 002-theme
 isotest: $(ISOFINAL) | $(SRCDIR)/testimg.qcow2 /etc/qemu/bridge.conf
 	kvm -cpu $(KVMCPU) -accel kvm -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMNETCONF) $(KVMDISPLAY) \
-	-cdrom $< $(UEFIBOOT) -drive file=$|,cache=unsafe,discard=ignore,detect-zeroes=off $(KVMVGA) $(SMBIOS)
+	-cdrom $< $(UEFIBOOT) -drive file=$(SRCDIR)/testimg.qcow2,cache=unsafe,discard=ignore,detect-zeroes=off $(KVMVGA) $(SMBIOS)
 
 
 /etc/qemu/bridge.conf:

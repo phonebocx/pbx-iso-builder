@@ -26,7 +26,7 @@ function get_this_ttyname() {
 }
 
 # Devmode check - are we in au? This needs to be less hardcoded 8)
-if $(get_ip_addr) | grep -q 10.46; then
+if $(get_ip_addr | grep -q 10.46); then
     mkdir -p /pbxdev
     grep -q pbxdev /proc/mounts || mount repo.phonebo.cx:/livebuild/packages /pbxdev
 fi
