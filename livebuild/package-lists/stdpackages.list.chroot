@@ -2,7 +2,11 @@ php8.2
 php8.2-sqlite3
 php8.2-curl
 php8.2-cli
+php8.2-bz2
+php8.2-zip
 jq
+zip
+unzip
 #ghostscript
 #imagemagick
 #libtiff-tools
