@@ -3,7 +3,7 @@ BUILDROOT=$(shell pwd)
 BUILDUTIME=$(shell date +%s)
 BRANCH=$(shell date +%Y.%m)
 # TODO: Fix this
-BUILDNUM ?= 1
+BUILDNUM ?= 2
 BUILD=$(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
 export BUILD BRANCH BUILDNUM BUILDROOT BUILDUTIME
 

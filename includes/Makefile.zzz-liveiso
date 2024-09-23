@@ -15,6 +15,9 @@ WGETURL_phonebocx.sources=$(LIVESRC)
 
 PREREQS += $(STAGING)/archives/live.list.chroot $(STAGING)/archives/phonebocx.key.chroot $(REPOSRCDEST)
 
+# Make sure the linux kernel raid modules are loaded, which is used by mkinitramfs
+PREREQS += /proc/mdstat
+
 # This is hacky patch. See below.
 PREREQS += /usr/lib/live/build/binary_grub-efi
 
@@ -70,3 +73,7 @@ $(STAGING)/archives/%: src/%
 $(REPOSRCDEST): src/phonebocx.sources
 	@mkdir -p $(@D)
 	cp $< $@
+
+/proc/mdstat:
+	@echo Loading mdraid kernel module
+	modprobe raid456
