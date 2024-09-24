@@ -25,6 +25,8 @@ packages $(PKGDESTDIR)/packages.json:
 	@for ipack in $(IMMUTABLEPACKAGES); do if [ ! -d "$(PKGBUILDDIR)/$$ipack" ]; then \
 		echo "Installing package $$ipack"; \
 		$(MAKE) -s $(SRCDIR)/immutable-$$ipack/.git; \
+		cd $(SRCDIR)/immutable-$$ipack/; git pull; \
+		if [ -e "$(SRCDIR)/immutable-$$ipack/Makefile" ]; then echo "Running 'make install' in $$(pwd)"; make install; fi; \
 		[ -e $(SRCDIR)/immutable-$$ipack/meta/packagename ] && rsync -a $(SRCDIR)/immutable-$$ipack/ $(PKGBUILDDIR)/$$ipack || echo "Error - No meta/packagename in $(SRCDIR)/immutable-$$ipack, skipping"; \
 	fi; done
 	@rm -rf $(PKGDESTDIR)

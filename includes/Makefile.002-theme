@@ -17,6 +17,14 @@ THEMEFILES= $(addprefix includes.chroot/distro/,$(DISTROFILES)) \
 	$(addprefix includes.binary/distro/,$(DISTROFILES)) \
 	includes.chroot/etc/motd includes.chroot/etc/issue includes.chroot/etc/issue.net
 
+# If there are any theme hooks, import them
+THEMEHOOKS=$(notdir $(wildcard $(THEMEDIR)/hooks/*))
+PREREQS += $(addprefix $(STAGING)/hooks/live/,$(THEMEHOOKS))
+
+$(STAGING)/hooks/live/%: $(THEMEDIR)/hooks/%
+	@mkdir -p $(@D)
+	cp $< $@
+
 # If there's a Makefile in the themedir, include that. It will want to clobber or add things
 include $(wildcard $(THEMEDIR)/Makefile)
 
