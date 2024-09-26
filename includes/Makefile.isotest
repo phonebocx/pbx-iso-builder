@@ -17,10 +17,10 @@ KVMNETCONF=-net nic,model=virtio,macaddr=52:54:00:00:00:01 -net bridge,br=br0
 KVMKEYS=lctrl-lalt
 KVMDISPLAY=-display gtk
 # This is the bios that is used
-UCODENAME=OVMF_CODE_4M.fd
+UCODENAME ?= OVMF_CODE_4M.fd
 UCODE=-drive if=pflash,unit=0,format=raw,readonly=on,file=/usr/share/OVMF/$(UCODENAME)
 # This is the uefi variable store
-UVARSNAME=OVMF_VARS_4M.fd
+UVARSNAME ?= OVMF_VARS_4M.fd
 UVARS=-drive if=pflash,unit=1,format=raw,file=src/$(UVARSNAME)
 UEFIBOOT=$(UCODE) $(UVARS)
 
