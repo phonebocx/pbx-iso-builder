@@ -42,7 +42,7 @@ BUILTISODEST=$(ISOBUILDROOT)/$(BUILTISOFILE)
 # to rebuild it if it's missing.
 $(ISOFINAL): # | $(BUILTISODEST)
 	@if [ ! -e "$(BUILTISODEST)" ]; then echo "running make $(BUILTISODEST)"; make $(BUILTISODEST); fi
-	@echo "Here I am now $(BUILTISODEST)"
+	@echo "Here I am in Makefile.zzz-liveiso starting from $(BUILTISODEST) against $(ISOFINAL)"
 	mkdir -p $(@D)
 	cp $(BUILTISODEST) $@
 

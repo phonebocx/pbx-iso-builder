@@ -120,5 +120,6 @@ debug:
 
 # Just make anything in MKDIRS, easy DRY.
 $(MKDIRS):
-	mkdir -p $@
+	@echo 'pbx-iso-builder is mkdiring $@'
+	@mkdir -p $@
 

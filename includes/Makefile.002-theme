@@ -25,6 +25,9 @@ $(STAGING)/hooks/live/%: $(THEMEDIR)/hooks/%
 	@mkdir -p $(@D)
 	cp $< $@
 
+# Set the ISONAME here, which may or may not be clobbered by the theme makefile
+ISONAME ?= $(THEME)-$(BUILD).iso
+
 # If there's a Makefile in the themedir, include that. It will want to clobber or add things
 include $(wildcard $(THEMEDIR)/Makefile)
 
@@ -34,8 +37,6 @@ THEMEVERSIONGEN ?= jq -r '"\(.distroname) Build \(.buildver) using Linux \(.kern
 THEMEDESTFILES += $(addprefix $(STAGING)/,$(THEMEFILES))
 
 PREREQS += $(SRCDIR)/live.list.chroot $(SRCDIR)/phonebocx.key.chroot $(SRCDIR)/phonebocx.sources $(THEMEDESTFILES)
-
-ISONAME ?= $(THEME)-$(BUILD).iso
 
 ISOFINAL ?= $(ISODEST)/$(ISONAME)
 
@@ -72,7 +73,9 @@ $(STAGING)/includes.chroot/distro/distrovars.json: $(THEMEDIR)/distroname $(STAG
 	@echo '"buildutime":$(BUILDUTIME),"timestamp":"$(shell date -R --date="@$(BUILDUTIME)")"}' >> $@
 
 # Copy chroot to distro. Can't use a wildcard for this, as the prereq above must be a PHONY
-$(STAGING)/includes.binary/distro/distrovars.json: $(STAGING)/includes.chroot/distro/distrovars.json
+DISTROVARSJSON=$(STAGING)/includes.binary/distro/distrovars.json
+export DISTROVARSJSON
+$(DISTROVARSJSON): $(STAGING)/includes.chroot/distro/distrovars.json
 	@mkdir -p $(@D)
 	@cp $< $@
 
