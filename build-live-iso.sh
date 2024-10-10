@@ -71,6 +71,10 @@ if [ ! "$GRUBNAME" ]; then
 	# Uppercase first char of Theme
 	GRUBNAME=${THEME^}
 fi
+# pxelinux is broken, just remove it
+rm -rf config/bootloaders/pxelinux
+
+# Now patch our name
 sed -i "s/__GRUBNAME__/$GRUBNAME/g" config/bootloaders/*/*cfg
 
 # Put all our debs in place. This isn't done as part of creating STAGING because
