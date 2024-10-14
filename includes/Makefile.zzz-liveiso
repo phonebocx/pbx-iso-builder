@@ -59,6 +59,16 @@ reiso:
 $(BUILTISODEST): setup splash $(THEMEDESTFILES) $(ISODEBS) $(PKGDESTDIR)/packages.json /usr/lib/live/build/binary_grub-efi
 	./build-live-iso.sh
 
+# This only rebuilds the binary image, and should only be used for testing
+# hooks and things like that.
+.PHONY: lbbinary
+lbbinary:
+	rsync -a ${LIVEBUILDSRC}/ $(ISOBUILDROOT)/config/
+	rsync -a ${STAGING}/ $(ISOBUILDROOT)/config/
+	cd $(ISOBUILDROOT); lb clean --binary; lb binary
+	@echo 'cp $(BUILDISODEST) $(ISOFINAL)'
+	@echo 'Or just "make iso" to finish'
+
 # Hack to replace /usr/lib/live/build/binary_grub-efi with a patched one
 # that imports extra efi files into the efi.img dosfs. This should be done
 # CORRECTLY by either patching it on the fly, or even better, submitting a

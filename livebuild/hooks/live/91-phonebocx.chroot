@@ -23,3 +23,6 @@ fi
 echo -e '\t* Add fastagi to /etc/services'
 sed -i '/fastagi/d' /etc/services
 echo 'fastagi         4573/tcp                        # Asterisk AGI' >>/etc/services
+
+# Remove the live medium ejector, which causes everything to hang on shutdown/reboot
+rm -f /usr/bin/live-medium-eject

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+echo I: Providing backward compatibility hooks
+
+mkdir goldlinux
+for x in isohooks/*; do
+    [ -e $x ] && ln $x goldlinux/$(basename $x)
+done

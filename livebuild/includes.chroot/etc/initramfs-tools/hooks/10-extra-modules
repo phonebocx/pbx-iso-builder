@@ -1,7 +1,6 @@
 #!/bin/sh
 PREREQ=""
-prereqs()
-{
+prereqs() {
     echo "$PREREQ"
 }
 case $1 in
@@ -30,6 +29,10 @@ copy_exec /usr/sbin/fsck
 copy_exec /usr/sbin/fsck.ext2
 copy_exec /usr/sbin/fsck.ext3
 copy_exec /usr/sbin/fsck.ext4
+
+# This is used to do very early repairs to the OS. It ended up just being easier
+# to add it here than rewrite everything.
+copy_exec /usr/bin/bash
 
 # copy other files ("other" here is a file type, so do not delete this keyword)
 copy_file other /etc/ssl/certs/ca-certificates.crt
