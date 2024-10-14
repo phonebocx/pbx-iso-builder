@@ -8,17 +8,15 @@
 
 # set -e
 
-Live ()
-{
-	if [ -x /scripts/local-top/cryptroot ]
-	then
+Live() {
+	if [ -x /scripts/local-top/cryptroot ]; then
 		/scripts/local-top/cryptroot
 	fi
 	log_warning_msg "Debugging for Live function in 9990-main is switching to /var/log/boot.log"
 
 	exec 6>&1
 	exec 7>&2
-	exec > boot.log
+	exec >boot.log
 	exec 2>&1
 	tail -f boot.log >&7 &
 	tailpid="${!}"
@@ -32,48 +30,41 @@ Live ()
 
 	Select_eth_device
 
-	if [ -e /conf/param.conf ]
-	then
+	if [ -e /conf/param.conf ]; then
 		. /conf/param.conf
 	fi
 
 	# Needed here too because some things (*cough* udev *cough*)
 	# changes the timeout
 
-	if [ -n "${NETBOOT}" ] || [ -n "${FETCH}" ] || [ -n "${HTTPFS}" ] || [ -n "${FTPFS}" ]
-	then
-		if do_netmount
-		then
+	if [ -n "${NETBOOT}" ] || [ -n "${FETCH}" ] || [ -n "${HTTPFS}" ] || [ -n "${FTPFS}" ]; then
+		if do_netmount; then
 			livefs_root="${mountpoint?}"
 		else
 			panic "Unable to find a live file system on the network"
 		fi
 	else
-		if [ -n "${ISCSI_PORTAL}" ]
-		then
+		if [ -n "${ISCSI_PORTAL}" ]; then
 			do_iscsi && livefs_root="${mountpoint}"
-		elif [ -n "${PLAIN_ROOT}" ] && [ -n "${ROOT}" ]
-		then
+		elif [ -n "${PLAIN_ROOT}" ] && [ -n "${ROOT}" ]; then
 			# Do a local boot from hd
 			livefs_root=${ROOT}
 		else
-			if [ -x /usr/bin/memdiskfind ]
-			then
-				if MEMDISK=$(/usr/bin/memdiskfind)
-				then
+			if [ -x /usr/bin/memdiskfind ]; then
+				if MEMDISK=$(/usr/bin/memdiskfind); then
 					# We found a memdisk, set up phram
 					# Sometimes "modprobe phram" can not successfully create /dev/mtd0.
-				        # Have to try several times.
+					# Have to try several times.
 					max_try=20
 					while [ ! -c /dev/mtd0 ] && [ "$max_try" -gt 0 ]; do
-					  modprobe phram "phram=memdisk,${MEMDISK}"
-					  sleep 0.2
-					  if [ -c /dev/mtd0 ]; then
-					  	break
-					  else
-					  	rmmod phram
-				  	  fi
-					  max_try=$((max_try - 1))
+						modprobe phram "phram=memdisk,${MEMDISK}"
+						sleep 0.2
+						if [ -c /dev/mtd0 ]; then
+							break
+						else
+							rmmod phram
+						fi
+						max_try=$((max_try - 1))
 					done
 
 					# Load mtdblock, the memdisk will be /dev/mtdblock0
@@ -83,12 +74,10 @@ Live ()
 
 			# Scan local devices for the image
 			i=0
-			while [ "$i" -lt 60 ]
-			do
+			while [ "$i" -lt 60 ]; do
 				livefs_root=$(find_livefs ${i})
 
-				if [ -n "${livefs_root}" ]
-				then
+				if [ -n "${livefs_root}" ]; then
 					break
 				fi
 
@@ -98,23 +87,19 @@ Live ()
 		fi
 	fi
 
-	if [ -z "${livefs_root}" ]
-	then
+	if [ -z "${livefs_root}" ]; then
 		panic "Unable to find a medium containing a live file system"
 	fi
 
 	Verify_checksums "${livefs_root}"
 
-	if [ "${TORAM}" ]
-	then
+	if [ "${TORAM}" ]; then
 		live_dest="ram"
-	elif [ "${TODISK}" ]
-	then
+	elif [ "${TODISK}" ]; then
 		live_dest="${TODISK}"
 	fi
 
-	if [ "${live_dest}" ]
-	then
+	if [ "${live_dest}" ]; then
 		log_begin_msg "Copying live media to ${live_dest}"
 		copy_live_to "${livefs_root}" "${live_dest}"
 		log_end_msg
@@ -123,20 +108,17 @@ Live ()
 	# if we do not unmount the ISO we can't run "fsck /dev/ice" later on
 	# because the mountpoint is left behind in /proc/mounts, so let's get
 	# rid of it when running from RAM
-	if [ -n "$FROMISO" ] && [ "${TORAM}" ]
-	then
+	if [ -n "$FROMISO" ] && [ "${TORAM}" ]; then
 		losetup -d /dev/loop0
 
-		if is_mountpoint /run/live/fromiso
-		then
+		if is_mountpoint /run/live/fromiso; then
 			umount /run/live/fromiso
 			rmdir --ignore-fail-on-non-empty /run/live/fromiso \
 				>/dev/null 2>&1 || true
 		fi
 	fi
 
-	if [ -n "${MODULETORAMFILE}" ] || [ -n "${PLAIN_ROOT}" ]
-	then
+	if [ -n "${MODULETORAMFILE}" ] || [ -n "${PLAIN_ROOT}" ]; then
 		setup_unionfs "${livefs_root}" "${rootmnt?}"
 	else
 		mac="$(get_mac)"
@@ -144,9 +126,8 @@ Live ()
 		mount_images_in_directory "${livefs_root}" "${rootmnt}" "${mac}"
 	fi
 
-	if [ -n "${ROOT_PID}" ]
-	then
-		echo "${ROOT_PID}" > "${rootmnt}"/lib/live/root.pid
+	if [ -n "${ROOT_PID}" ]; then
+		echo "${ROOT_PID}" >"${rootmnt}"/lib/live/root.pid
 	fi
 
 	log_end_msg
@@ -160,47 +141,41 @@ Live ()
 	# if we do not unmount the ISO we can't run "fsck /dev/ice" later on
 	# because the mountpoint is left behind in /proc/mounts, so let's get
 	# rid of it when running from RAM
-	if [ -n "$FINDISO" ] && [ "${TORAM}" ]
-	then
+	if [ -n "$FINDISO" ] && [ "${TORAM}" ]; then
 		losetup -d /dev/loop0
 
-		if is_mountpoint /run/live/findiso
-		then
+		if is_mountpoint /run/live/findiso; then
 			umount /run/live/findiso
 			rmdir --ignore-fail-on-non-empty /run/live/findiso \
 				>/dev/null 2>&1 || true
 		fi
 	fi
 
-	if [ -f /etc/hostname ] && ! grep -E -q -v '^[[:space:]]*(#|$)' "${rootmnt}/etc/hostname"
-	then
+	if [ -f /etc/hostname ] && ! grep -E -q -v '^[[:space:]]*(#|$)' "${rootmnt}/etc/hostname"; then
 		log_begin_msg "Copying /etc/hostname to ${rootmnt}/etc/hostname"
 		cp -v /etc/hostname "${rootmnt}/etc/hostname"
 		log_end_msg
 	fi
 
-	if [ -f /etc/hosts ] && ! grep -E -q -v '^[[:space:]]*(#|$|(127.0.0.1|::1|ff02::[12])[[:space:]])' "${rootmnt}/etc/hosts"
-	then
+	if [ -f /etc/hosts ] && ! grep -E -q -v '^[[:space:]]*(#|$|(127.0.0.1|::1|ff02::[12])[[:space:]])' "${rootmnt}/etc/hosts"; then
 		log_begin_msg "Copying /etc/hosts to ${rootmnt}/etc/hosts"
 		cp -v /etc/hosts "${rootmnt}/etc/hosts"
 		log_end_msg
 	fi
 
-	if [ -L /root/etc/resolv.conf ] ; then
+	if [ -L /root/etc/resolv.conf ]; then
 		# assume we have resolvconf
 		DNSFILE="${rootmnt}/etc/resolvconf/resolv.conf.d/base"
 	else
 		DNSFILE="${rootmnt}/etc/resolv.conf"
 	fi
-	if [ -f /etc/resolv.conf ] && ! grep -E -q -v '^[[:space:]]*(#|$)' "${DNSFILE}"
-	then
+	if [ -f /etc/resolv.conf ] && ! grep -E -q -v '^[[:space:]]*(#|$)' "${DNSFILE}"; then
 		log_begin_msg "Copying /etc/resolv.conf to ${DNSFILE}"
 		cp -v /etc/resolv.conf "${DNSFILE}"
 		log_end_msg
 	fi
 
-	if ! [ -d "/lib/live/boot" ]
-	then
+	if ! [ -d "/lib/live/boot" ]; then
 		panic "A wrong rootfs was mounted."
 	fi
 
@@ -216,7 +191,7 @@ Live ()
 
 	Swap
 	# Logging for this should be in /var/log/live/boot.log
-	set -x
+	#set -x
 	PhoneBocx
 	# Don't turn off debugging if it should be on
 	if [ ! "$LIVE_BOOT_DEBUG" ]; then
@@ -226,7 +201,8 @@ Live ()
 	exec 1>&6 6>&-
 	exec 2>&7 7>&-
 	kill ${tailpid}
-	[ -w "${rootmnt}/var/log/" ] && mkdir -p "${rootmnt}/var/log/live" && ( \
-				cp boot.log "${rootmnt}/var/log/live" 2>/dev/null; \
-				cp fsck.log "${rootmnt}/var/log/live" 2>/dev/null )
+	[ -w "${rootmnt}/var/log/" ] && mkdir -p "${rootmnt}/var/log/live" && (
+		cp boot.log "${rootmnt}/var/log/live" 2>/dev/null
+		cp fsck.log "${rootmnt}/var/log/live" 2>/dev/null
+	)
 }
