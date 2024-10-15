@@ -1,5 +1,4 @@
-# This is from includes.chroot and should hopefully never need
-# to be updated
+# This file comes from includes.chroot in pbx-iso-builder
 [Unit]
 Description=PhoneBo.cx Boot
 After=network.target

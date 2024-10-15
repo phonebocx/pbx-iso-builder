@@ -12,23 +12,21 @@ esac
 . /usr/share/initramfs-tools/hook-functions
 # Begin real processing below this line
 
-# include listed modules to initramfs but not load them without the necessity
+# Add r8152 and i2c-dev to the initramfs. We don't force load r8152,
+# as that will get loaded on demand, but i2c-dev DOES need to be
+# force loaded, as it can't be auto-probed
 manual_add_modules r8152
-
-# include modules from file (one per line) to initramfs but not load them without the necessity
-# add_modules_from_file /tmp/modlist
-
-# include listed modules to initramfs and load them during the boot
 force_load i2c-dev
 
 # executable to copy to initramfs, with library dependencies
 copy_exec /usr/lib/x86_64-linux-gnu/libnss_dns.so.2
 
-# missing fsck in initramfs
+# missing fscks in initramfs
 copy_exec /usr/sbin/fsck
 copy_exec /usr/sbin/fsck.ext2
 copy_exec /usr/sbin/fsck.ext3
 copy_exec /usr/sbin/fsck.ext4
+copy_exec /usr/sbin/fsck.msdos
 
 # This is used to do very early repairs to the OS. It ended up just being easier
 # to add it here than rewrite everything.
