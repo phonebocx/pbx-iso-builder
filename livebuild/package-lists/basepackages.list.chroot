@@ -25,4 +25,5 @@ cryptsetup-bin
 cryptsetup-run
 xinetd
 apache2
+telnet
 
