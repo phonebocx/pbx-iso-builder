@@ -6,13 +6,11 @@ export LANG=C.UTF-8
 
 . /usr/local/bin/phonebocx-init.sh
 
-echo $(date)": This is the boot script" >/dev/kmsg
-echo $(date)": Doing the needful"
+echo $(date)": phonebocx-boot launched" >/dev/kmsg
 bootscript=$(get_script_loc core boot)
 if [ "$bootscript" ]; then
     cd $(dirname $bootscript)
-    echo Launching bootscript $bootscript
-    sleep 1
+    echo Launching bootscript $bootscript >/dev/kmsg
     exec $bootscript
 fi
 
