@@ -1,4 +1,7 @@
 #!/bin/bash
 
-echo "Default post_copy hook triggered"
-
+# Prior to running this, the user has jsut seen:
+# "   Copying source image:  OK"
+# So make sure you indent any output with three spaces to make
+# it line up.
+#echo "   Display some output here about stuff"

@@ -1,4 +1,6 @@
 #!/bin/bash
 
-echo "Default pre_copy hook triggered"
-
+# Last line output before running this is:
+# echo "** Installing $NEWVERS to $CONF_PARTITION"
+# So indent it with three spaces if you want to output anything
+echo "   Pre-installation checks passed"
