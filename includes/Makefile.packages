@@ -31,3 +31,13 @@ packages $(PKGDESTDIR)/packages.json:
 	fi; done
 	@rm -rf $(PKGDESTDIR)
 	./build-packages.php --force --dest=$(PKGDESTDIR) --pkgdir=$(PKGBUILDDIR)
+
+# These are used to generate the list of git repos when updating the packageapi
+.PHONY: dumppackages
+dumppackages:
+	@echo "# $(IMMUTABLEPACKAGES)"
+	@for ipack in $(IMMUTABLEPACKAGES); do make -s showgit-$$ipack; done
+
+.PHONY: showgit-%
+showgit-%:
+	@echo $(*)=$(GITSRC_immutable-$(*))
