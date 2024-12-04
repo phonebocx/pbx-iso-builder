@@ -13,20 +13,6 @@ function get_script_loc() {
     done
 }
 
-function get_ip_addr() {
-    [ "$1" ] && unset IP
-    if [ ! "$IP" ]; then
-        IP=$(ip -o addr show | awk '/inet / { print $4 }' | tr '\n' ' ')
-    fi
-    echo $IP
-}
-
 function get_this_ttyname() {
     tty 2>/dev/null | sed 's!/dev/!!'
 }
-
-# Devmode check - are we in au? This needs to be less hardcoded 8)
-if $(get_ip_addr | grep -q 10.46); then
-    mkdir -p /pbxdev
-    grep -q pbxdev /proc/mounts || mount repo.phonebo.cx:/livebuild/packages /pbxdev
-fi
