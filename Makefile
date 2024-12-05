@@ -1,10 +1,10 @@
 SHELL=/bin/bash
-BUILDROOT=$(shell pwd)
-BUILDUTIME=$(shell date +%s)
+BUILDROOT := $(shell pwd)
+BUILDUTIME := $(shell date +%s)
 BRANCH ?= $(shell date +%Y.%m)
 # TODO: Fix this
 BUILDNUM ?= 2
-BUILD=$(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
+BUILD ?= $(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
 export BUILD BRANCH BUILDNUM BUILDROOT BUILDUTIME
 
 # Everything needs secondexpansion

@@ -23,10 +23,11 @@ packages $(PKGDESTDIR)/packages.json:
 		fi; \
 	fi
 	@for ipack in $(IMMUTABLEPACKAGES); do if [ ! -d "$(PKGBUILDDIR)/$$ipack" ]; then \
-		echo "Installing package $$ipack"; \
+		echo "Installing package $$ipack into $(PKGBUILDDIR)/$$ipack"; \
+		cd $(BUILDROOT); \
 		$(MAKE) -s $(SRCDIR)/immutable-$$ipack/.git; \
 		cd $(SRCDIR)/immutable-$$ipack/; git pull; \
-		if [ -e "$(SRCDIR)/immutable-$$ipack/Makefile" ]; then echo "Running 'make install' in $$(pwd)"; make install; fi; \
+		if [ -e "$(SRCDIR)/immutable-$$ipack/Makefile" ]; then echo "Running 'make install' in $$(pwd)"; make -s install; fi; \
 		[ -e $(SRCDIR)/immutable-$$ipack/meta/packagename ] && rsync -a $(SRCDIR)/immutable-$$ipack/ $(PKGBUILDDIR)/$$ipack || echo "Error - No meta/packagename in $(SRCDIR)/immutable-$$ipack, skipping"; \
 	fi; done
 	@rm -rf $(PKGDESTDIR)
@@ -41,3 +42,10 @@ dumppackages:
 .PHONY: showgit-%
 showgit-%:
 	@echo $(*)=$(GITSRC_immutable-$(*))
+
+showimmutable:
+	@echo $(IMMUTABLEPACKAGES)
+
+pkgdestdir-%:
+	@echo $(SRCDIR)/immutable-$(*)
+
