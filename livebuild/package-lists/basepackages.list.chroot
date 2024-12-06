@@ -26,4 +26,5 @@ cryptsetup-run
 xinetd
 apache2
 telnet
+attr
 

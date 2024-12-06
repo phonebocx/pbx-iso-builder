@@ -99,12 +99,13 @@ function rebuild_pkg($srcdir, $outfile)
 function get_gitinfo($pkgdir)
 {
 	chdir($pkgdir);
-	$retarr = ["commit" => "unreleased", "utime" => "0", "descr" => "No description", "modified" => true];
-	$cmd = "git log -n1 . 2>/dev/null";
+	$retarr = ["commit" => "unreleased", "utime" => 0, "descr" => "No description", "modified" => true];
+	$cmd = "git log -n1 --date='format:%s' . 2>/dev/null";
 	exec($cmd, $output, $res);
 	if ($res != 0) {
 		return $retarr;
 	}
+	$retarr['modified'] = false;
 	foreach ($output as $line) {
 		if (!$line) {
 			continue;
@@ -114,7 +115,7 @@ function get_gitinfo($pkgdir)
 			continue;
 		}
 		if (preg_match('/^Date:\s+(.+)$/', $line, $o)) {
-			$retarr['date'] = $o[1];
+			$retarr['utime'] = (int) $o[1];
 			continue;
 		}
 		if (preg_match('/^Author: (.+)$/', $line, $o)) {
@@ -124,20 +125,22 @@ function get_gitinfo($pkgdir)
 		$retarr['descr'] = trim($line);
 		break;
 	}
-	$retarr['utime'] = @strtotime($retarr['date']);
+	$retarr['date'] = gmdate("Y-m-d\TH:i:s\Z", $retarr['utime']);
 	$cmd = "git status -s .";
 	exec($cmd, $soutput, $res);
 	if (!$soutput) {
-		$retarr['modified'] = false;
 		return $retarr;
 	}
 	foreach ($soutput as $line) {
-		$retarr['modified'] = true;
 		$filearr = explode(' ', trim($line));
 		if (file_exists($filearr[1])) {
+			if ($filearr[1] == 'meta/pkginfo.json') {
+				continue;
+			}
 			$s = stat($filearr[1]);
 			if ($s['mtime'] > $retarr['utime']) {
 				$retarr['utime'] = $s['mtime'];
+				$retarr['modified'] = true;
 			}
 		}
 	}
