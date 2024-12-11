@@ -1,4 +1,5 @@
-desktop-image: "/isolinux/splash800x600.png"
+#grub-theme
+desktop-image: "/isolinux/splash.png"
 title-color: "#ffffff"
 title-font: "Unifont Regular 16"
 title-text: ""
@@ -7,7 +8,7 @@ terminal-font: "Unifont Regular 16"
 
 #help bar at the bottom
 + label {
-        top = 100%-50
+        top = 100%-100
         left = 0
         width = 100%
         height = 20
@@ -21,12 +22,12 @@ terminal-font: "Unifont Regular 16"
 + boot_menu {
         left = 10%
         width = 80%
-        top = 52%
-        height = 48%-80
+        top = 30%
+        height = 50%
         item_color = "#a8a8a8"
 	item_font = "Unifont Regular 16"
         selected_item_color= "#ffffff"
-	selected_item_font = "Unifont Regular 16"
+	selected_item_font = "Unifont Bold 16"
         item_height = 16
         item_padding = 0
         item_spacing = 4
@@ -39,7 +40,7 @@ terminal-font: "Unifont Regular 16"
 + progress_bar {
         id = "__timeout__"
         left = 15%
-        top = 100%-80
+        top = 100%-120
         height = 16
         width = 70%
         font = "Unifont Regular 16"
