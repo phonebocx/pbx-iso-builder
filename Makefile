@@ -28,9 +28,9 @@ export COREBUILD ISOBUILDROOT
 # This is where things are staged.
 SRCDIR=$(BUILDROOT)/src
 # This is the directory that packages are staged to, before being squashfs'ed
-PKGBUILDDIR=$(SRCDIR)/pkgbuild
+PKGBUILDDIR ?= $(SRCDIR)/pkgbuild
 # This is the directory that is copied into /live/packages on the ISO
-PKGDESTDIR=$(COREBUILD)/packages
+PKGDESTDIR ?= $(COREBUILD)/packages
 # Any debs placed here get injected by build-live-iso.sh
 DEBDEST=$(SRCDIR)/debs
 # This is everything that gets overlaid over the default config in
@@ -106,6 +106,11 @@ STARGETS += $(PKGS) $(SPKGS)
 # And now trigger them
 .PHONY: setup
 setup: $(STARGETS) $(PREREQS) | $(SRCDIR)
+
+# This just installs the system packages, without anything else.
+system: $(STARGETS)
+	@echo "System targets installed."
+	@echo "  * $(STARGETS)"
 
 build: setup $(PREREQS)
 	@echo "Build: There are $(PREREQS)"

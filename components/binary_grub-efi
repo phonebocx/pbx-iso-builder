@@ -162,7 +162,7 @@ cat >binary.sh <<END
 set -e
 
 # Enable debugging
-set -x
+# set -x
 
 gen_efi_boot_img(){
 	local platform="\$1"

@@ -9,8 +9,8 @@ DEVPACKAGES=
 # is in the IMMUTABLEPACKAGES var.
 .PHONY: packages $(PKGDESTDIR)/packages.json
 packages $(PKGDESTDIR)/packages.json:
-	@echo "Theme $(THEME) uses packages '$(IMMUTABLEPACKAGES)'"
-	@rm -rf $(PKGBUILDDIR); mkdir -p $(PKGBUILDDIR)
+	@echo "Theme $(THEME) uses packages '$(IMMUTABLEPACKAGES)', installing to $(PKGBUILDDIR) and output to $(PKGDESTDIR)"
+	@if [ ! "$(PKGUPDATEONLY)" ]; then echo "Deleting $(PKGBUILDDIR)"; rm -rf $(PKGBUILDDIR); mkdir -p $(PKGBUILDDIR); fi
 	@if [ "$(DEVPACKAGES)" ]; then echo "Building with dev packages"; \
 		DEV="$(realpath $(wildcard $(DEVPACKAGES)/*))"; \
 		if [ "$$DEV" ]; then \
@@ -22,16 +22,15 @@ packages $(PKGDESTDIR)/packages.json:
 			done; \
 		fi; \
 	fi
-	@for ipack in $(IMMUTABLEPACKAGES); do if [ ! -d "$(PKGBUILDDIR)/$$ipack" ]; then \
-		echo "Installing package $$ipack into $(PKGBUILDDIR)/$$ipack"; \
-		cd $(BUILDROOT); \
-		$(MAKE) -s $(SRCDIR)/immutable-$$ipack/.git; \
+	@for ipack in $(IMMUTABLEPACKAGES); do cd $(BUILDROOT); \
+		echo "Installing/updating package $$ipack into $(PKGBUILDDIR)/$$ipack"; \
+		if [ ! -d "$(PKGBUILDDIR)/$$ipack" ]; then $(MAKE) -s $(SRCDIR)/immutable-$$ipack/.git; fi; \
 		cd $(SRCDIR)/immutable-$$ipack/; git pull; \
 		if [ -e "$(SRCDIR)/immutable-$$ipack/Makefile" ]; then echo "Running 'make install' in $$(pwd)"; make -s install; fi; \
 		[ -e $(SRCDIR)/immutable-$$ipack/meta/packagename ] && rsync -a $(SRCDIR)/immutable-$$ipack/ $(PKGBUILDDIR)/$$ipack || echo "Error - No meta/packagename in $(SRCDIR)/immutable-$$ipack, skipping"; \
-	fi; done
-	@rm -rf $(PKGDESTDIR)
-	./build-packages.php --force --dest=$(PKGDESTDIR) --pkgdir=$(PKGBUILDDIR)
+	done
+	@if [ ! "$(PKGUPDATEONLY)" ]; then echo "Deleting $(PKGDESTDIR)"; rm -rf $(PKGDESTDIR); fi
+	@if [ ! "$(NOPKGBUILD)" ]; then echo "./build-packages.php --force --dest=$(PKGDESTDIR) --pkgdir=$(PKGBUILDDIR)"; ./build-packages.php --force --dest=$(PKGDESTDIR) --pkgdir=$(PKGBUILDDIR); fi
 
 # These are used to generate the list of git repos when updating the packageapi
 .PHONY: dumppackages
