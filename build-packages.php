@@ -1,6 +1,11 @@
 #!/usr/bin/env php
 <?php
 
+include __DIR__ . "/package-funcs.php";
+
+$url = "http://example.com/repo";
+$webroot = "/var/www/html/webroot";
+
 $opts = getopt("d:p:f", ["dest:", "jfilename:", "force", "pkgdir:"]);
 $force = false;
 
@@ -12,12 +17,12 @@ $jfilename = $opts['jfilename'] ?? "packages.json";
 
 $dest = $opts['d'] ?? $opts['dest'] ?? false;
 if (!$dest) {
-	$dest = __DIR__ . "/src/packages";
+	$dest = __DIR__ . "/baserepo";
 }
 
 $srcdir = $opts['p'] ?? $opts['pkgdir'] ?? false;
 if (!$srcdir) {
-	$srcdir = __DIR__ . "/packages";
+	$srcdir = __DIR__ . "/git";
 }
 
 print "Saving to $dest with $jfilename using packages in $srcdir";
@@ -26,123 +31,40 @@ if (!is_dir($dest)) {
 	chmod($dest, 0777);
 }
 
+$p = new Packages($srcdir, $dest);
+
 $pkglimit = $opts['p'] ?? false;
 if ($pkglimit) {
 	print " (Only packaging $pkglimit)";
+	$p->onlyPackage($pkglimit);
 }
-print "\n";
+print "\nPublishing to $url using webroot $webroot\n";
+$p->useWebroot($webroot);
 
-$pkgs = glob($srcdir . "/*/meta");
-$pkgarr = [];
-foreach ($pkgs as $meta) {
-	$pkgdir = dirname($meta);
-	$pkg = basename($pkgdir);
-	if ($pkglimit && $pkglimit !== $pkg) {
-		print "Ignorning $pkg because of packagelimit $pkglimit\n";
-		continue;
-	}
-	$git = get_gitinfo($pkgdir);
-	@unlink("$pkgdir/meta/pkginfo.json");
-	file_put_contents("$pkgdir/meta/pkginfo.json", json_encode($git));
-	$pkgarr[$pkg] = $git;
-}
+$v = $p->parsePkgArr(null, $force, true);
 
-if (!file_exists("$dest/$jfilename")) {
-	$origp = [];
-} else {
-	$origp = json_decode(file_get_contents("$dest/$jfilename"), true);
-}
+$devpackages = $p->getCurrentDevPackages();
+$prodpackages = $p->getCurrentProdPackages();
 
+$pkgarr = $v['pkgarr'];
+// Now loop over them again to generate the main package json
 foreach ($pkgarr as $pkg => $data) {
-	$filename = "$dest/$pkg.squashfs";
-	$json = json_encode($data);
-	if (file_exists($filename . ".meta")) {
-		$meta = file_get_contents($filename . ".meta");
-		if ($meta == $json) {
-			$hash = $origp[$pkg]['sha256'] ?? false;
-			if (!$hash) {
-				print "No hash for $pkg, rebuilding\n";
-			} else {
-				$pkgarr[$pkg]['sha256'] = $hash;
-				if (!$force) {
-					print "$pkg unchanged, not rebuilding\n";
-					continue;
-				}
-			}
+	$latestdev = $data['latestdev'];
+	$latestprod = $data['latestprod'];
+	foreach ($data['releases'] as $rel => $d) {
+		if ($rel == $latestdev) {
+			$devpackages[$pkg] = $p->publishPackage($rel, $d);
+		}
+		if ($rel == $latestprod) {
+			$prodpackages[$pkg] = $p->publishPackage($rel, $d);
 		}
 	}
-	@unlink($filename . ".meta");
-	file_put_contents($filename . ".meta", $json);
-	$pkgarr[$pkg]['sha256'] = rebuild_pkg($srcdir . "/$pkg", $filename);
 }
 
-@unlink("$dest/$jfilename");
-print "Saving package build output to $dest/$jfilename\n";
-file_put_contents("$dest/$jfilename", json_encode($pkgarr));
-// var_dump("$dest/packages.json", json_encode($pkgarr));
-
-function rebuild_pkg($srcdir, $outfile)
-{
-	if (file_exists($outfile)) {
-		unlink($outfile);
-	}
-	$cmd = "mksquashfs $srcdir $outfile -all-root -no-xattrs -e .git";
-	exec($cmd, $output, $ret);
-	// print "$cmd exited with $ret\n";
-	chmod($outfile, 0777);
-	$hash = hash_file("sha256", $outfile);
-	file_put_contents("$outfile.sha256", $hash);
-	return $hash;
-}
-
-
-function get_gitinfo($pkgdir)
-{
-	chdir($pkgdir);
-	$retarr = ["commit" => "unreleased", "utime" => 0, "descr" => "No description", "modified" => true];
-	$cmd = "git log -n1 --date='format:%s' . 2>/dev/null";
-	exec($cmd, $output, $res);
-	if ($res != 0) {
-		return $retarr;
-	}
-	$retarr['modified'] = false;
-	foreach ($output as $line) {
-		if (!$line) {
-			continue;
-		}
-		if (preg_match('/^commit (.+)$/', $line, $o)) {
-			$retarr['commit'] = $o[1];
-			continue;
-		}
-		if (preg_match('/^Date:\s+(.+)$/', $line, $o)) {
-			$retarr['utime'] = (int) $o[1];
-			continue;
-		}
-		if (preg_match('/^Author: (.+)$/', $line, $o)) {
-			$retarr['author'] = $o[1];
-			continue;
-		}
-		$retarr['descr'] = trim($line);
-		break;
-	}
-	$retarr['date'] = gmdate("Y-m-d\TH:i:s\Z", $retarr['utime']);
-	$cmd = "git status -s .";
-	exec($cmd, $soutput, $res);
-	if (!$soutput) {
-		return $retarr;
-	}
-	foreach ($soutput as $line) {
-		$filearr = explode(' ', trim($line));
-		if (file_exists($filearr[1])) {
-			if ($filearr[1] == 'meta/pkginfo.json') {
-				continue;
-			}
-			$s = stat($filearr[1]);
-			if ($s['mtime'] > $retarr['utime']) {
-				$retarr['utime'] = $s['mtime'];
-				$retarr['modified'] = true;
-			}
-		}
-	}
-	return $retarr;
-}
+$djson = json_encode($devpackages);
+$pjson = json_encode($prodpackages);
+$devdest = $p->getDevDest();
+$proddest = $p->getProdDest();
+file_put_contents($devdest, $djson);
+file_put_contents($proddest, $pjson);
+print "Updated $proddest and $devdest\n";
