@@ -225,7 +225,11 @@ class Packages
 				}
 
 				if (file_exists($filename)) {
-					$currenthash = xattr_get($filename, "sha256");
+					if (function_exists('xattr_get')) {
+						$currenthash = xattr_get($filename, "sha256");
+					} else {
+						$currenthash = hash_file("sha256", $filename);
+					}
 				} else {
 					$currenthash = "0";
 					$rebuild = true;
@@ -260,6 +264,7 @@ class Packages
 				if ($showoutput) print "Changes detected in $pkg at $rel, rebuilding\n";
 				$newhash = $this->rebuildPkg($rel, $d, $pkgdir, $filename, $showoutput);
 				$d['sha256'] = $newhash;
+				$pkgarr[$pkg]['releases'][$rel]['sha256'] = $newhash;
 				$retarr[$pkg]['rebuilt'][] = $rel;
 				// Note the reldest/filename/meta etc above is not set inside
 				// $d, as it wasn't passed by ref, AND, it's not needed, as it
@@ -337,7 +342,9 @@ class Packages
 		exec($cmd, $output, $ret);
 		chmod($outfile, 0777);
 		$hash = hash_file("sha256", $outfile);
-		xattr_set($outfile, "sha256", $hash);
+		if (function_exists('xattr_set')) {
+			xattr_set($outfile, "sha256", $hash);
+		}
 		file_put_contents("$outfile.sha256", $hash);
 		return $hash;
 	}

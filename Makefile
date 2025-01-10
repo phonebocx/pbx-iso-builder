@@ -29,6 +29,8 @@ export COREBUILD ISOBUILDROOT
 SRCDIR=$(BUILDROOT)/src
 # This is the directory that packages are staged to, before being squashfs'ed
 PKGBUILDDIR ?= $(SRCDIR)/pkgbuild
+# Where all packages are staged before copying them into DESTDIR
+PKGSTAGING ?= $(SRCDIR)/pkgstaging
 # This is the directory that is copied into /live/packages on the ISO
 PKGDESTDIR ?= $(COREBUILD)/packages
 # Any debs placed here get injected by build-live-iso.sh

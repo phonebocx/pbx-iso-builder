@@ -4,6 +4,13 @@
 #DEVPACKAGES=/livebuild/packages
 DEVPACKAGES=
 
+# Enable this to use whatever is the latest in git. You probably want to turn
+# this on if you've enabled the above DEVPACKAGES, or set it in a theme or
+# whatever.
+#GITDEVPACKAGES=--devpackages
+
+BUILDCMD=./build-packages.php --force $(GITDEVPACKAGES) --staging=$(PKGSTAGING) --dest=$(PKGDESTDIR) --pkgsrcdir=$(PKGBUILDDIR)
+
 # This copies anything found in ../packages (hardcoded package dev dir) into
 # srcdir/packages, then uses the git helper to pull anything left over that
 # is in the IMMUTABLEPACKAGES var.
@@ -30,7 +37,7 @@ packages $(PKGDESTDIR)/packages.json:
 		[ -e $(SRCDIR)/immutable-$$ipack/meta/packagename ] && rsync -a $(SRCDIR)/immutable-$$ipack/ $(PKGBUILDDIR)/$$ipack || echo "Error - No meta/packagename in $(SRCDIR)/immutable-$$ipack, skipping"; \
 	done
 	@if [ ! "$(PKGUPDATEONLY)" ]; then echo "Deleting $(PKGDESTDIR)"; rm -rf $(PKGDESTDIR); fi
-	@if [ ! "$(NOPKGBUILD)" ]; then echo "./build-packages.php --force --dest=$(PKGDESTDIR) --pkgdir=$(PKGBUILDDIR)"; ./build-packages.php --force --dest=$(PKGDESTDIR) --pkgdir=$(PKGBUILDDIR); fi
+	@if [ ! "$(NOPKGBUILD)" ]; then echo "$(BUILDCMD)"; $(BUILDCMD); fi
 
 # These are used to generate the list of git repos when updating the packageapi
 .PHONY: dumppackages

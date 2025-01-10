@@ -6,39 +6,53 @@ include __DIR__ . "/package-funcs.php";
 $url = "http://example.com/repo";
 $webroot = "/var/www/html/webroot";
 
-$opts = getopt("d:p:f", ["dest:", "jfilename:", "force", "pkgdir:"]);
+$opts = getopt("d:f", ["devpackages", "dest:", "staging:", "jfilename:", "force", "pkgsrcdir:"]);
 $force = false;
 
 if (isset($opts['f']) || isset($opts['force'])) {
 	$force = true;
 }
 
-$jfilename = $opts['jfilename'] ?? "packages.json";
+$stagingdir = $opts['staging'] ?? false;
+if (!$stagingdir) {
+	throw new \Exception("Need to provide a staging directory");
+}
 
 $dest = $opts['d'] ?? $opts['dest'] ?? false;
 if (!$dest) {
-	$dest = __DIR__ . "/baserepo";
+	throw new \Exception("Need to provide a final destination directory");
+}
+if (array_key_exists('devpackages', $opts)) {
+	$installdevpkgs = true;
+} else {
+	$installdevpkgs = false;
 }
 
-$srcdir = $opts['p'] ?? $opts['pkgdir'] ?? false;
+$srcdir = $opts['p'] ?? $opts['pkgsrcdir'] ?? false;
 if (!$srcdir) {
-	$srcdir = __DIR__ . "/git";
+	throw new \Exception("No pkgsrcdir provided");
 }
 
-print "Saving to $dest with $jfilename using packages in $srcdir";
+if (!is_dir($srcdir)) {
+	throw new \Exception("$srcdir does not exist");
+}
+
 if (!is_dir($dest)) {
 	mkdir($dest, 0777, true);
 	chmod($dest, 0777);
 }
 
-$p = new Packages($srcdir, $dest);
-
-$pkglimit = $opts['p'] ?? false;
-if ($pkglimit) {
-	print " (Only packaging $pkglimit)";
-	$p->onlyPackage($pkglimit);
+print "Staging to $stagingdir using ";
+if ($installdevpkgs) {
+	print "DEVELOPMENT PACKAGES from $srcdir ";
+} else {
+	print "released packages from $srcdir ";
 }
-print "\nPublishing to $url using webroot $webroot\n";
+
+$jfilename = $opts['jfilename'] ?? "$stagingdir/fullpackages.json";
+
+$p = new Packages($srcdir, $stagingdir);
+
 $p->useWebroot($webroot);
 
 $v = $p->parsePkgArr(null, $force, true);
@@ -47,24 +61,44 @@ $devpackages = $p->getCurrentDevPackages();
 $prodpackages = $p->getCurrentProdPackages();
 
 $pkgarr = $v['pkgarr'];
+file_put_contents($jfilename, json_encode($pkgarr));
+
 // Now loop over them again to generate the main package json
 foreach ($pkgarr as $pkg => $data) {
 	$latestdev = $data['latestdev'];
 	$latestprod = $data['latestprod'];
 	foreach ($data['releases'] as $rel => $d) {
 		if ($rel == $latestdev) {
-			$devpackages[$pkg] = $p->publishPackage($rel, $d);
+			$devpackages[$pkg] = $d;
+			$devpackages[$pkg]['rel'] = $rel;
 		}
 		if ($rel == $latestprod) {
-			$prodpackages[$pkg] = $p->publishPackage($rel, $d);
+			$prodpackages[$pkg] = $d;
+			$prodpackages[$pkg]['rel'] = $rel;
 		}
 	}
 }
 
-$djson = json_encode($devpackages);
-$pjson = json_encode($prodpackages);
-$devdest = $p->getDevDest();
-$proddest = $p->getProdDest();
-file_put_contents($devdest, $djson);
-file_put_contents($proddest, $pjson);
-print "Updated $proddest and $devdest\n";
+if ($installdevpkgs) {
+	$src = $devpackages;
+} else {
+	$src = $prodpackages;
+}
+$isopackages = [];
+foreach ($src as $p => $d) {
+	foreach (['squashfs', 'meta', 'sha256file'] as $s) {
+		$srcfile = $d[$s];
+		if (!file_exists($srcfile)) {
+			throw new \Exception("Hang on $srcfile does not exist in package $p");
+		}
+		$destfile = $dest . "/" . basename($srcfile);
+		copy($srcfile, $destfile);
+	}
+	$tmparr = [];
+	foreach (['commit', 'utime', 'descr', 'modified', 'author', 'date', 'rel'] as $x) {
+		$tmparr[$x] = $d[$x];
+	}
+	$isopackages[$p] = $tmparr;
+}
+file_put_contents("$dest/packages.json", json_encode($isopackages));
+print "Saved to $dest/packages.json\n";
