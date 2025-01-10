@@ -119,7 +119,7 @@ class Packages
 				$dev = false;
 			}
 			$tagarr['dev'] = $dev;
-			$cmd = "git log -n1 --date='format:%s' . 2>/dev/null";
+			$cmd = "git log -n1 --date='unix' . 2>/dev/null";
 			exec($cmd, $logoutput, $res);
 			if ($res !== 0) {
 				var_dump($cmd, $logoutput, $res);
