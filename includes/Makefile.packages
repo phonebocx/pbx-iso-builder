@@ -9,7 +9,7 @@ DEVPACKAGES=
 # whatever.
 #GITDEVPACKAGES=--devpackages
 
-BUILDCMD=./build-packages.php --force $(GITDEVPACKAGES) --staging=$(PKGSTAGING) --dest=$(PKGDESTDIR) --pkgsrcdir=$(PKGBUILDDIR)
+BUILDCMD=./build-packages.php $(GITDEVPACKAGES) --staging=$(PKGSTAGING) --dest=$(PKGDESTDIR) --pkgsrcdir=$(PKGBUILDDIR)
 
 # This copies anything found in ../packages (hardcoded package dev dir) into
 # srcdir/packages, then uses the git helper to pull anything left over that
