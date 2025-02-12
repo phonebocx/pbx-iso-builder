@@ -31,7 +31,7 @@ $(DTSROOT)/aclocal.m4: | $(DTSROOT)/.git $(DLHEADERDEST)
 
 # Run configure after autoreconf
 $(DTSROOT)/Makefile: | $(DTSROOT)/aclocal.m4
-	cd $(DTSROOT) && ./configure
+	cd $(DTSROOT) && ./configure || (echo -e '\n\nYou do not need to install dahdi-linux. Run "make dlh" to put the headers in place!\n\n'; exit 9)
 
 # Patch the xpp/xtalk Makefile to remove a warning I don't care aout
 $(DTSROOT)/xpp/xtalk/Makefile.patched: $(DTSROOT)/xpp/xtalk/Makefile
