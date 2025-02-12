@@ -1,0 +1,17 @@
+# Build the asterisk debs
+ASTROOT=$(BUILDROOT)/asteriskbuild
+ASTMAKEFILE=$(ASTROOT)/Makefile
+
+ASTBUILTDEBS ?= $(shell cd $(ASTROOT) && make debs)
+
+.PHONY: asterisk
+asterisk: $(ASTMAKEFILE)
+	cd $(ASTROOT) && make astbuild
+
+$(ASTMAKEFILE): /usr/bin/docker
+	@echo '$(ASTROOT) does not exist, this is a submodule. Fix'.
+	@exit 99
+
+/usr/bin/docker:
+	@echo Docker is not installed. Install docker.
+	@exit 99

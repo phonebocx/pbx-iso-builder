@@ -1,0 +1,3 @@
+[submodule "asteriskbuild"]
+	path = asteriskbuild
+	url = git@github.com:phonebocx/asteriskbuild.git

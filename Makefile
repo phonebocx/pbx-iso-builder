@@ -7,6 +7,10 @@ BUILDNUM ?= 2
 BUILD ?= $(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
 export BUILD BRANCH BUILDNUM BUILDROOT BUILDUTIME
 
+ASTVER ?= 22.2.0
+ASTBUILDNUM ?= 1
+export ASTVER ASTBUILDNUM
+
 # Everything needs secondexpansion
 .SECONDEXPANSION:
 
