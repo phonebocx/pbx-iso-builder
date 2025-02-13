@@ -18,7 +18,8 @@ export DEBMIRROR LIVECONF
 
 #PREREQS += $(STAGING)/archives/live.list.chroot $(STAGING)/archives/phonebocx.key.chroot $(REPOSRCDEST)
 
-$(SRCDIR)/live.list.chroot:
+# Shims to pick up prereqs in 002-theme
+$(SRCDIR)/live.list.chroot $(SRCDIR)/phonebocx.key.chroot $(SRCDIR)/phonebocx.sources:
 	touch $@
 
 # Make sure the linux kernel raid modules are loaded, which is used by mkinitramfs
