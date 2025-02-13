@@ -5,6 +5,10 @@ ASTMAKEFILE=$(ASTROOT)/Makefile
 include asteriskbuild/Makefile
 
 PREREQS += $(ALLASTDEBS)
+ALLISODEBS += $(ALLASTDEBS)
+
+ztest:
+	@echo $(PREREQS)
 
 $(ASTMAKEFILE): | /usr/bin/docker
 	@echo '$(ASTROOT) does not exist, this is a submodule. Fix'.
