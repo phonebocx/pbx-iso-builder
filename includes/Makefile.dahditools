@@ -1,5 +1,5 @@
 DTOOLSVER=3.4.0
-DTOOLSREL=1
+DTOOLSREL=3
 DTOOLSBRANCH=sgm
 
 GITSRC_dahdi-tools=git@github.com:phonebocx/dahdi-tools.git

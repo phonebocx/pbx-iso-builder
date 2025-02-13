@@ -5,15 +5,21 @@ DEBMIRROR=http://mirror.aarnet.edu.au/debian/
 LIVECONF=$(shell pwd)/liveconf
 export DEBMIRROR LIVECONF
 
-REPOSRC=https://repo.phonebo.cx/debian/phonebocx.apt.source
-REPOSRCDEST=$(STAGING)/includes.chroot/etc/apt/sources.list.d/phonebocx.sources
-PUBKEYSRC=https://repo.phonebo.cx/phonebocx.gpg.key
-LIVESRC=https://repo.phonebo.cx/debian/phonebocx.sources
-WGETURL_live.list.chroot=$(REPOSRC)
-WGETURL_phonebocx.key.chroot=$(PUBKEYSRC)
-WGETURL_phonebocx.sources=$(LIVESRC)
+# External repo disabled, this should be able to build everything
+# itself without relying on external things.
+#
+#REPOSRC=https://repo.phonebo.cx/debian/phonebocx.apt.source
+#REPOSRCDEST=$(STAGING)/includes.chroot/etc/apt/sources.list.d/phonebocx.sources
+#PUBKEYSRC=https://repo.phonebo.cx/phonebocx.gpg.key
+#LIVESRC=https://repo.phonebo.cx/debian/phonebocx.sources
+#WGETURL_live.list.chroot=$(REPOSRC)
+#WGETURL_phonebocx.key.chroot=$(PUBKEYSRC)
+#WGETURL_phonebocx.sources=$(LIVESRC)
 
-PREREQS += $(STAGING)/archives/live.list.chroot $(STAGING)/archives/phonebocx.key.chroot $(REPOSRCDEST)
+#PREREQS += $(STAGING)/archives/live.list.chroot $(STAGING)/archives/phonebocx.key.chroot $(REPOSRCDEST)
+
+$(SRCDIR)/live.list.chroot:
+	touch $@
 
 # Make sure the linux kernel raid modules are loaded, which is used by mkinitramfs
 PREREQS += /proc/mdstat

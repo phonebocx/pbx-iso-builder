@@ -32,6 +32,8 @@ KVMVGA=-vga vmware
 TESTUUID=36e26dd9-91a0-4547-b197-bf28ce57cfe9
 SMBIOS=-smbios type=1,manufacturer=HonestRob,product=IsoTest,version=31337,serial=01189998819991197253,uuid=$(TESTUUID)
 
+MMCIMAGE=/usr/local/build/mmcblk.raw
+
 $(SRCDIR)/testimg.qcow2: | $(SRCDIR)/$(UVARSNAME)
 	qemu-img create -f qcow2 src/testimg.qcow2 80G
 
@@ -48,6 +50,21 @@ isotest: $(ISOFINAL) | $(SRCDIR)/testimg.qcow2 /etc/qemu/bridge.conf
 	kvm -cpu $(KVMCPU) -accel kvm -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMNETCONF) $(KVMDISPLAY) \
 	-cdrom $< $(UEFIBOOT) -drive file=$(SRCDIR)/testimg.qcow2,cache=unsafe,discard=ignore,detect-zeroes=off $(KVMVGA) $(SMBIOS)
 
+
+# This does not have full networking, and is purely to be a fast and
+# simple way to test the iso. SNAPSHOT is disabled as it adds a few seconds
+# to a bootup of the vm.
+test: $(ISOFINAL) | $(MMCIMAGE)
+	@[ ! -e "$(SRCDIR)/$(UVARSNAME)" ] && $(MAKE) $(SRCDIR)/$(UVARSNAME) || :
+	kvm -cpu $(KVMCPU) -accel kvm -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMDISPLAY) \
+	$(xSNAPSHOT) $(UEFIBOOT) $(KVMVGA) $(HWSMBIOS) \
+	-drive file=$<,if=none,id=cdrom,format=raw \
+	-device ide-cd,drive=cdrom,bootindex=1 \
+	-drive format=raw,file=$| $(BOOTMENU)
+
+
+$(MMCIMAGE):
+	truncate --size=32G $(MMCIMAGE)
 
 /etc/qemu/bridge.conf:
 	@echo 'ERROR: '
