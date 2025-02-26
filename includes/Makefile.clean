@@ -1,0 +1,20 @@
+CLEANROOT_asterisk=$(BUILDROOT)/asteriskbuild
+CLEANFILES_asterisk=.astbuild .spandspbuild
+FULLCLEANFILES_asterisk=astbuild/spandsp.tar.gz docker/*.deb
+CLEANDIRS_asterisk=src build
+
+define gencleanvars =
+	$(eval CLEANROOT=$(CLEANROOT_$1))
+	$(eval CLEANFILES=$(wildcard $(addprefix $(CLEANROOT)/,$(CLEANFILES_$1))))
+	$(eval FULLCLEANFILES=$(CLEANFILES) $(wildcard $(addprefix $(CLEANROOT)/,$(FULLCLEANFILES_$1))))
+	$(eval CLEANDIRS=$(wildcard $(addprefix $(CLEANROOT)/,$(CLEANDIRS_$1))))
+endef
+
+clean-%:
+	$(call gencleanvars,$*)
+	@echo Trying to clean $* from includes/Makefile.clean
+	@if [ ! "$(CLEANFILES)" ]; then echo 'No files to clean for $*'; exit 9; fi
+	@echo 'Not actually doing the clean. Paste this:'
+	@echo '    rm -rf $(CLEANFILES) $(CLEANDIRS)'
+
+
