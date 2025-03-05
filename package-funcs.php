@@ -327,6 +327,15 @@ class Packages
 			var_dump($cmd, $output, $res);
 			throw new \Exception("Could not checkout branch $rel");
 		}
+		if (file_exists('Makefile')) {
+			print "Running 'make install' in $srcdir for $rel\n";
+			$cmd = "make install 2> /dev/null";
+			exec($cmd, $output, $res);
+			if ($res !== 0) {
+				var_dump($cmd, $output, $res);
+				throw new \Exception("Make didn't work");
+			}
+		}
 		if (file_exists($outfile)) {
 			unlink($outfile);
 		}
