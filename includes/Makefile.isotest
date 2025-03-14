@@ -13,7 +13,7 @@ PKG_kvm=qemu-system-x86
 KVMRAM=2G
 KVMCPUS=2
 KVMCPU=host
-KVMNETCONF=-net nic,model=virtio,macaddr=52:54:00:00:00:01 -net bridge,br=br0
+KVMNETCONF=-net nic,model=virtio,macaddr=52:54:00:00:00:01 -net nic,model=virtio,macaddr=52:54:00:00:00:02 -net bridge,br=br0
 KVMKEYS=lctrl-lalt
 KVMDISPLAY=-display gtk
 # This is the bios that is used
