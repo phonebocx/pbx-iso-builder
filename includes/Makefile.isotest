@@ -21,12 +21,14 @@ KVMCPUS=2
 #
 # Example:
 #KVMCPU=Broadwell
+#KVMCPU=Westmere-v1
 KVMCPU=host
 
 # This can be 'kvm' or 'tcg' - tcg is software emulation, 'kvm' uses
 # the hosts KVM kernel module. If 'kvm' errors, it means that the host
 # that this is running on does not have KVM accelleration enabled. Fix
 # the host, or set it to 'tcg'
+#KVMACCEL=-accel tcg
 KVMACCEL=-accel kvm
 
 KVMNETCONF=-net nic,model=virtio,macaddr=52:54:00:00:00:01 -net nic,model=virtio,macaddr=52:54:00:00:00:02 -net bridge,br=br0

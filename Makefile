@@ -15,10 +15,12 @@ export ASTVER ASTBUILDNUM
 .SECONDEXPANSION:
 
 # This is exported for use by the pbx-kernel-builder toolset
-KERNELVER=6.6.71
-KERNELREL=1
+KERNELVER=6.6.83
+KERNELREL=2
 KFIRMWARE=20240610
-export KERNELVER KERNELREL KFIRMWARE
+# This is used by pbx-kernel-builder
+CPUTYPE ?= generic
+export KERNELVER KERNELREL KFIRMWARE CPUTYPE
 
 # This should be in a totally different filesystem to THIS
 # builder, to avoid things like vscode trying to explore everything
