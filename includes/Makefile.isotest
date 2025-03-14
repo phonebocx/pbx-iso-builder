@@ -12,7 +12,23 @@ PKG_kvm=qemu-system-x86
 
 KVMRAM=2G
 KVMCPUS=2
+# You can set various CPU emulation types here. The list of known
+# CPU types is here:
+#   https://qemu-project.gitlab.io/qemu/system/qemu-cpu-models.html
+#
+# Note that Westmere doesn't boot, as the kernel requires later than that.
+# If you DO have a Westmere CPU, set -accel tcp and KVMCPU
+#
+# Example:
+#KVMCPU=Broadwell
 KVMCPU=host
+
+# This can be 'kvm' or 'tcg' - tcg is software emulation, 'kvm' uses
+# the hosts KVM kernel module. If 'kvm' errors, it means that the host
+# that this is running on does not have KVM accelleration enabled. Fix
+# the host, or set it to 'tcg'
+KVMACCEL=-accel kvm
+
 KVMNETCONF=-net nic,model=virtio,macaddr=52:54:00:00:00:01 -net nic,model=virtio,macaddr=52:54:00:00:00:02 -net bridge,br=br0
 KVMKEYS=lctrl-lalt
 KVMDISPLAY=-display gtk
@@ -47,7 +63,7 @@ isoclean:
 
 # ISOFINAL is from 002-theme
 isotest: $(ISOFINAL) | $(SRCDIR)/testimg.qcow2 /etc/qemu/bridge.conf
-	kvm -cpu $(KVMCPU) -accel kvm -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMNETCONF) $(KVMDISPLAY) \
+	kvm -cpu $(KVMCPU) $(KVMACCEL) -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMNETCONF) $(KVMDISPLAY) \
 	-cdrom $< $(UEFIBOOT) -drive file=$(SRCDIR)/testimg.qcow2,cache=unsafe,discard=ignore,detect-zeroes=off $(KVMVGA) $(SMBIOS)
 
 
@@ -56,7 +72,7 @@ isotest: $(ISOFINAL) | $(SRCDIR)/testimg.qcow2 /etc/qemu/bridge.conf
 # to a bootup of the vm.
 test: $(ISOFINAL) | $(MMCIMAGE)
 	@[ ! -e "$(SRCDIR)/$(UVARSNAME)" ] && $(MAKE) $(SRCDIR)/$(UVARSNAME) || :
-	kvm -cpu $(KVMCPU) -accel kvm -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMDISPLAY) \
+	kvm -cpu $(KVMCPU) $(KVMACCEL) -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMDISPLAY) \
 	$(xSNAPSHOT) $(UEFIBOOT) $(KVMVGA) $(HWSMBIOS) \
 	-drive file=$<,if=none,id=cdrom,format=raw \
 	-device ide-cd,drive=cdrom,bootindex=1 \
