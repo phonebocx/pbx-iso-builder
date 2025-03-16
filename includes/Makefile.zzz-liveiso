@@ -1,9 +1,8 @@
 TOOLS += live-build mksquashfs
 PKG_mksquashfs=squashfs-tools
 
-DEBMIRROR=http://mirror.aarnet.edu.au/debian/
 LIVECONF=$(shell pwd)/liveconf
-export DEBMIRROR LIVECONF
+export LIVECONF
 
 # External repo disabled, this should be able to build everything
 # itself without relying on external things.
