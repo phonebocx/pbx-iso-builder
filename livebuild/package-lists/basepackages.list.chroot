@@ -30,3 +30,11 @@ attr
 pv
 fbcat
 lsof
+
+# Note: Embedded machines may not have an accurate clock. Make sure
+# there is always a ntp client running, and don't do anything if
+# the system time is significantly less than the build time. (Eg,
+# don't block if it's a few seconds - what if the build server has
+# a messed up clock?)
+
+systemd-timesyncd
