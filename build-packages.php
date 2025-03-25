@@ -44,9 +44,9 @@ if (!is_dir($dest)) {
 
 print "Staging to $stagingdir using ";
 if ($installdevpkgs) {
-	print "DEVELOPMENT PACKAGES from $srcdir ";
+	print "DEVELOPMENT PACKAGES from $srcdir\n";
 } else {
-	print "released packages from $srcdir ";
+	print "released packages from $srcdir\n";
 }
 
 $jfilename = $opts['jfilename'] ?? "$stagingdir/fullpackages.json";

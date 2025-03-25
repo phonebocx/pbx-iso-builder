@@ -165,8 +165,11 @@ class Packages
 			foreach ($soutput as $line) {
 				$filearr = explode(' ', trim($line));
 				if (file_exists($filearr[1])) {
-					if ($filearr[1] == 'meta/pkginfo.json') {
+					if ($filearr[1] == 'meta/pkginfo.json' || $filearr[1] === 'meta/authorized_keys') {
 						continue;
+					}
+					if (!$dev) {
+						throw new \Exception("Modifications found in non dev - Found '$line' in $pkgdir");
 					}
 					$s = stat($filearr[1]);
 					if ($s['mtime'] > $tagarr['utime']) {
@@ -243,14 +246,12 @@ class Packages
 				if ($force) {
 					if ($showoutput) print "Forcing rebuild of $filename\n";
 					$rebuild = true;
-				}
-
-				if ($currenthash !== $metahash) {
-					if ($showoutput) print "Current '$currenthash' and meta '$metahash' does not match\n";
+				} elseif ($currenthash !== $metahash) {
+					if ($showoutput) {
+						print "Current '$currenthash' and meta '$metahash' does not match\n";
+					}
 					$rebuild = true;
-				}
-
-				if ($meta != $d) {
+				} elseif ($meta != $d) {
 					if ($showoutput) {
 						print "Meta and d does not match\n";
 						print "Meta: " . json_encode($meta) . "\n";
@@ -259,6 +260,7 @@ class Packages
 					$rebuild = true;
 				}
 				if (!$rebuild) {
+					// print "No rebuild for $pkg $rel\n";
 					continue;
 				}
 				if ($showoutput) print "Changes detected in $pkg at $rel, rebuilding\n";
@@ -312,7 +314,9 @@ class Packages
 
 	public function rebuildPkg($rel, $d, $srcdir, $outfile, bool $showoutput = false)
 	{
-		if ($showoutput) print "Creating squashfs from $srcdir on branch $rel\n";
+		if ($showoutput) {
+			print "Creating squashfs from $srcdir on branch $rel\n";
+		}
 
 		$utime = $d['utime'];
 		// Delete the pkginfo file just in case

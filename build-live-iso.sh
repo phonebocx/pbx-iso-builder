@@ -26,7 +26,7 @@ lb config \
 	--architectures amd64 --distribution ${DISTRO} --iso-application phonebocx --iso-publisher xrobau --iso-volume phonebocx \
 	--archive-areas "main contrib non-free $F" --updates true --security true --backports true \
 	--image-name "$BUILD" \
-	--initsystem systemd --memtest memtest86+ --debootstrap-options "--include=apt-transport-https,ca-certificates" \
+	--initsystem systemd --memtest memtest86+ \
 	--bootappend-live "boot=live hostname=phonebocx ${NAL} union=overlay console=ttyS0,115200 console=tty0 net.ifnames=0 biosdevname=0 nomodeset" \
 	--bootappend-live-failsafe none \
 	--linux-packages linux-image-${KERNELVER} \
