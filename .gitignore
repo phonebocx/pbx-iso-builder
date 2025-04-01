@@ -5,3 +5,5 @@ src
 packages
 /local
 /isos
+# Do not checkin build stamps
+.builds

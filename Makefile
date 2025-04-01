@@ -2,8 +2,7 @@ SHELL=/bin/bash
 BUILDROOT := $(shell pwd)
 BUILDUTIME := $(shell date +%s)
 BRANCH ?= $(shell date +%Y.%m)
-# TODO: Fix this
-BUILDNUM ?= 2
+BUILDNUM ?= $(shell $(BUILDROOT)/buildnum.sh $(BRANCH))
 BUILD ?= $(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
 export BUILD BRANCH BUILDNUM BUILDROOT BUILDUTIME
 
@@ -120,8 +119,15 @@ system: $(STARGETS)
 	@echo "System targets installed."
 	@echo "  * $(STARGETS)"
 
+.PHONY: bump build
+bump:
+	@echo -n "Incrementing BUILDNUM, is now "
+	@$(BUILDROOT)/buildnum.sh $(BRANCH) --inc
+
 build: setup $(PREREQS)
-	@echo "Build: There are $(PREREQS)"
+	@echo "Current build ref is $(BUILD)"
+	@echo "Prereqs for this build are:"
+	@echo "$(PREREQS)"
 
 .PHONY: debug
 debug:

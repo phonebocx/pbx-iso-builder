@@ -1,4 +1,4 @@
-TOOLS += kvm
+TOOLS += kvm vncviewer
 PKG_kvm=qemu-system-x86
 
 # This needs some manual host wrangling before it will work.
@@ -34,6 +34,12 @@ KVMACCEL=-accel kvm
 KVMNETCONF=-net nic,model=virtio,macaddr=52:54:00:00:00:01 -net nic,model=virtio,macaddr=52:54:00:00:00:02 -net bridge,br=br0
 KVMKEYS=lctrl-lalt
 KVMDISPLAY=-display gtk
+# When booting in BIOS mode, gtk display hangs. No idea why. Use VNC (fast) or
+# sdl (massively slow) instead.
+#
+# This listens on port 5910 for VGA connections.
+VNCDEF=127.0.0.1:10
+#
 # This is the bios that is used
 UCODENAME ?= OVMF_CODE_4M.fd
 UCODE=-drive if=pflash,unit=0,format=raw,readonly=on,file=/usr/share/OVMF/$(UCODENAME)
@@ -76,6 +82,19 @@ test: $(ISOFINAL) | $(MMCIMAGE)
 	@[ ! -e "$(SRCDIR)/$(UVARSNAME)" ] && $(MAKE) $(SRCDIR)/$(UVARSNAME) || :
 	kvm -cpu $(KVMCPU) $(KVMACCEL) -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMDISPLAY) \
 	$(xSNAPSHOT) $(UEFIBOOT) $(KVMVGA) $(HWSMBIOS) \
+	-drive file=$<,if=none,id=cdrom,format=raw \
+	-device ide-cd,drive=cdrom,bootindex=1 \
+	-drive format=raw,file=$| $(BOOTMENU)
+
+# Same for this, but this is in BIOS mode, not uefi. For some strange reason
+# you can't use gtk for BIOS mode VMs, it hangs. So we use vncviewer
+# See bug: https://gitlab.com/qemu-project/qemu/-/issues/2897
+biostest: $(ISOFINAL) | $(MMCIMAGE)
+	@[ ! -e "$(SRCDIR)/$(UVARSNAME)" ] && $(MAKE) $(SRCDIR)/$(UVARSNAME) || :
+	@echo 'VNC Viewer will attempt to connect to $(VNCDEF) in one second. Press ^C here to terminate.'
+	@( sleep 1; vncviewer $(VNCDEF) ) &
+	kvm -cpu $(KVMCPU) $(KVMACCEL) -smp cpus=$(KVMCPUS) -m $(KVMRAM) \
+	-display vnc=$(VNCDEF) $(KVMVGA) $(HWSMBIOS) \
 	-drive file=$<,if=none,id=cdrom,format=raw \
 	-device ide-cd,drive=cdrom,bootindex=1 \
 	-drive format=raw,file=$| $(BOOTMENU)

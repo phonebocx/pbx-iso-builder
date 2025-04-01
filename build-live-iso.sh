@@ -66,16 +66,18 @@ rsync -a ${LIVEBUILDSRC}/ config/
 # staging to change things in the default LIVEBUILDROOT
 rsync -a ${STAGING}/ config/
 
-# Replace __GRUBNAME__ with $THEME
+# Replace __GRUBNAME__ with $THEMENAME (Configured in 001-theme Makefile)
 if [ ! "$GRUBNAME" ]; then
 	# Uppercase first char of Theme
-	GRUBNAME=${THEME^}
+	GRUBNAME=${THEMENAME^}
 fi
 # pxelinux is broken, just remove it
 rm -rf config/bootloaders/pxelinux
 
 # Now patch our name
 sed -i "s/__GRUBNAME__/$GRUBNAME/g" config/bootloaders/*/*cfg
+# This is syslinux live.cfg.in
+sed -i "s/__GRUBNAME__/$GRUBNAME/g" config/bootloaders/*/*cfg.in
 
 # Put all our debs in place. This isn't done as part of creating STAGING because
 # I didn't want to have to care about ordering everything.

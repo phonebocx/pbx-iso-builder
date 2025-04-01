@@ -1,18 +1,18 @@
 label live-@FLAVOUR@-destruct
-	menu label PhoneBo.cx ^Auto Install (Destructive)
+	menu label __GRUBNAME__ ^Auto Install (Destructive)
 	menu default
 	linux @LINUX@
 	initrd @INITRD@
-	append @APPEND_LIVE@ wipeall
+	append vga=790 @APPEND_LIVE@ wipeall
 
 label live-@FLAVOUR@
-	menu label ^PhoneBo.cx Live
+	menu label __GRUBNAME__ ^Live
 	linux @LINUX@
 	initrd @INITRD@
-	append @APPEND_LIVE@
+	append vga=790 @APPEND_LIVE@
 
 label live-@FLAVOUR@-failsafe
-	menu label PhoneBo.cx (^Failsafe)
+	menu label __GRUBNAME__ (^Failsafe)
 	linux @LINUX@
 	initrd @INITRD@
 	append @APPEND_LIVE_FAILSAFE@

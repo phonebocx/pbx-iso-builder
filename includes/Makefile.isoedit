@@ -1,0 +1,50 @@
+# This is a bit of a hacky toolset to allow you to edit a built ISO. I
+# use it for editing grub/syslinux things without needing to run a complete
+# 'make reiso' which takes a few minutes
+
+TOOLS += xorriso
+
+SRCISO=$(ISOFINAL)
+ORIGCOPY=$(ISOFINAL).orig.iso
+EXTRACTDIR=/usr/local/build/extracted
+XORISSO=xorriso -boot_image any keep -osirrox on:auto_chmod_on -md5 on -xattr on -dev $(SRCISO)
+
+
+# Back up the source iso so it can be reverted, but only once
+$(ORIGCOPY): | $(SRCISO)
+	cp $(SRCISO) $@
+	touch -r $@ $(SRCISO)
+
+.PHONY: isorevert
+isorevert:
+	@echo 'Reverting ISO to originally created one'
+	@rm $(SRCISO)
+	@cp $(ORIGCOPY) $(SRCISO)
+	@rm -rf $(EXTRACTDIR)
+
+.PHONY: isoedit
+isoedit $(EXTRACTDIR)/efi.img: | $(ORIGCOPY) /usr/bin/xorriso
+	@rm -rf $(EXTRACTDIR)
+	@mkdir -p $(EXTRACTDIR)
+	@echo Extracting $(SRCISO) into $(EXTRACTDIR)
+	$(XORISSO) -cp_rax / $(EXTRACTDIR)
+	@chmod -R u+rwx $(EXTRACTDIR)
+	@touch -r $(EXTRACTDIR)/efi.img $(SRCISO)
+	@echo -e '\n\nUpdating iso with new ctimes'
+	@$(XORISSO) -update_r $(EXTRACTDIR) / 2>&1 | grep -v 'Adjusted attributes'
+	@echo -e '\nExtraction complete. Edit the files in $(EXTRACTDIR)\n'
+	@echo "You can now run 'make isoupdate' or 'make isodiff'. To revert to"
+	@echo "the original iso, run 'make isorevert' (Which deletes $(EXTRACTDIR))"
+
+.PHONY: isodiff
+isodiff: $(EXTRACTDIR)/efi.img
+	@echo Doing a diff against $(EXTRACTDIR), ignoring st_ctime
+	@$(XORISSO) -compare_r $(EXTRACTDIR) / 2>&1 | grep -v st_ctime
+
+.PHONY: isoupdate
+isoupdate: $(EXTRACTDIR)/efi.img
+	@echo Updating $(SRCISO) with the contents of $(EXTRACTDIR)
+	@$(XORISSO) -update_r $(EXTRACTDIR) /
+
+
+

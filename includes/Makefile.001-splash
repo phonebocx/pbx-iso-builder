@@ -26,6 +26,10 @@ THEMEFONTDESTS=$(addprefix /usr/share/fonts/truetype/,$(THEMEFONTS))
 
 PREREQS += $(SPLASHPNG)
 
+# This is used in build-live-iso.sh as well as here
+THEMENAME ?= $(THEME)
+export THEMENAME
+
 # Copy any fonts needed into the local machine
 /usr/share/fonts/truetype/%.ttf: $(THEMEDIR)/%.ttf
 	@mkdir -p $(@D)
@@ -37,7 +41,7 @@ splash:
 	$(MAKE) $(ALLSPLASHPNGS)
 
 $(SPLASHSVG): $(THEMEDIR)/splashsrc.svg
-	sed -e 's/__BUILD__/$(BUILD)/' -e 's/@RELEASE@/$(RELEASE)/' -e 's/@ARCHITECTURE@/amd64/' < $< > $@
+	sed -e 's/__BUILD__/$(BUILD)/' -e 's/@RELEASE@/$(RELEASE)/' -e 's/@ARCHITECTURE@/amd64/' -e 's/@THEMENAME@/$(THEMENAME)/' < $< > $@
 
 $(SPLASHPNG): $(SPLASHSVG) $(THEMEFONTDESTS)
 	rsvg-convert --format png --height 600 --width 800 $< -o $@
@@ -46,7 +50,7 @@ $(SPLASHLARGEPNG): $(SPLASHSVG) $(THEMEFONTDESTS)
 	rsvg-convert --format png --height 768 --width 1024 $< -o $@
 
 $(LIVESPLASHSVG): $(THEMEDIR)/livesplashsrc.svg
-	sed -e 's/__BUILD__/$(BUILD)/' -e 's/@RELEASE@/$(RELEASE)/' -e 's/@ARCHITECTURE@/amd64/' < $< > $@
+	sed -e 's/__BUILD__/$(BUILD)/' -e 's/@RELEASE@/$(RELEASE)/' -e 's/@ARCHITECTURE@/amd64/' -e 's/@THEMENAME@/$(THEMENAME)/' < $< > $@
 
 $(LIVESPLASHPNG): $(LIVESPLASHSVG) $(THEMEFONTDESTS)
 	rsvg-convert --format png --height 600 --width 800 $< -o $@
