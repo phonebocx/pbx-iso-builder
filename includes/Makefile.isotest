@@ -56,6 +56,10 @@ SMBIOS=-smbios type=1,manufacturer=HonestRob,product=IsoTest,version=31337,seria
 
 MMCIMAGE=/usr/local/build/mmcblk.raw
 
+NFSSERVER=10.46.80.55
+NFSMOUNT=/livebuild/packages
+NFSSMBIOS=-smbios type=2,manufacturer=nfs,product=$(NFSSERVER),asset=$(NFSMOUNT)
+
 $(SRCDIR)/testimg.qcow2: | $(SRCDIR)/$(UVARSNAME)
 	qemu-img create -f qcow2 src/testimg.qcow2 80G
 
@@ -78,6 +82,7 @@ test: $(ISOFINAL) | $(MMCIMAGE)
 	@[ ! -e "$(SRCDIR)/$(UVARSNAME)" ] && $(MAKE) $(SRCDIR)/$(UVARSNAME) || :
 	kvm -cpu $(KVMCPU) $(KVMACCEL) -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMDISPLAY) \
 	$(UEFIBOOT) $(KVMVGA) $(HWSMBIOS) \
+	$(NFSSMBIOS) \
 	-drive file=$<,if=none,id=cdrom,format=raw \
 	-device ide-cd,drive=cdrom,bootindex=1 \
 	-drive format=raw,file=$| $(BOOTMENU)
@@ -93,6 +98,7 @@ biostest: $(ISOFINAL) | $(MMCIMAGE)
 	@[ ! -e "$(SRCDIR)/$(UVARSNAME)" ] && $(MAKE) $(SRCDIR)/$(UVARSNAME) || :
 	@echo '** WARNING ** -- If this boot hangs, turn off SSH "ObscureKeystrokeTiming" - See Makefile.isotest'
 	kvm -cpu $(KVMCPU) $(KVMACCEL) -smp cpus=$(KVMCPUS) -m $(KVMRAM) \
+	$(NFSSMBIOS) \
 	$(KVMDISPLAY) $(KVMVGA) $(HWSMBIOS) \
 	-drive file=$<,if=none,id=cdrom,format=raw \
 	-device ide-cd,drive=cdrom,bootindex=1 \
