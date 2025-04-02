@@ -33,25 +33,23 @@ KVMACCEL=-accel kvm
 
 KVMNETCONF=-net nic,model=virtio,macaddr=52:54:00:00:00:01 -net nic,model=virtio,macaddr=52:54:00:00:00:02 -net bridge,br=br0
 KVMKEYS=lctrl-lalt
+
+# This can be changed to VNC or something, if needed
 KVMDISPLAY=-display gtk
-# When booting in BIOS mode, gtk display hangs. No idea why. Use VNC (fast) or
-# sdl (massively slow) instead.
-#
-# This listens on port 5910 for VGA connections.
-VNCDEF=127.0.0.1:10
-#
-# This is the bios that is used
+
+# This is the UEFI bios that is used
 UCODENAME ?= OVMF_CODE_4M.fd
 UCODE=-drive if=pflash,unit=0,format=raw,readonly=on,file=/usr/share/OVMF/$(UCODENAME)
+
 # This is the uefi variable store
 UVARSNAME ?= OVMF_VARS_4M.fd
 UVARS=-drive if=pflash,unit=1,format=raw,file=src/$(UVARSNAME)
 UEFIBOOT=$(UCODE) $(UVARS)
 
-KVMVGA=-vga vmware
 # -vga vmware is to stop grub having issues on startup. Without it, things like
 # 'videoinfo' just hang. I found the tip here:
 #    https://askubuntu.com/questions/1234203/video-problems-with-efi-boot-on-kvm-qemu
+KVMVGA=-vga vmware
 
 TESTUUID=36e26dd9-91a0-4547-b197-bf28ce57cfe9
 SMBIOS=-smbios type=1,manufacturer=HonestRob,product=IsoTest,version=31337,serial=01189998819991197253,uuid=$(TESTUUID)
@@ -74,27 +72,28 @@ isotest: $(ISOFINAL) | $(SRCDIR)/testimg.qcow2 /etc/qemu/bridge.conf
 	kvm -cpu $(KVMCPU) $(KVMACCEL) -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMNETCONF) $(KVMDISPLAY) \
 	-cdrom $< $(UEFIBOOT) -drive file=$(SRCDIR)/testimg.qcow2,cache=unsafe,discard=ignore,detect-zeroes=off $(KVMVGA) $(SMBIOS)
 
-
 # This does not have full networking, and is purely to be a fast and
-# simple way to test the iso. SNAPSHOT is disabled as it adds a few seconds
-# to a bootup of the vm.
+# simple way to test the iso.
 test: $(ISOFINAL) | $(MMCIMAGE)
 	@[ ! -e "$(SRCDIR)/$(UVARSNAME)" ] && $(MAKE) $(SRCDIR)/$(UVARSNAME) || :
 	kvm -cpu $(KVMCPU) $(KVMACCEL) -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMDISPLAY) \
-	$(xSNAPSHOT) $(UEFIBOOT) $(KVMVGA) $(HWSMBIOS) \
+	$(UEFIBOOT) $(KVMVGA) $(HWSMBIOS) \
 	-drive file=$<,if=none,id=cdrom,format=raw \
 	-device ide-cd,drive=cdrom,bootindex=1 \
 	-drive format=raw,file=$| $(BOOTMENU)
 
-# Same for this, but this is in BIOS mode, not uefi. For some strange reason
-# you can't use gtk for BIOS mode VMs, it hangs. So we use vncviewer
-# See bug: https://gitlab.com/qemu-project/qemu/-/issues/2897
+# Same for this, but this is in BIOS mode, not uefi.
+
+# WARNING: If this hangs, or is really slow, you need to turn off
+# SSH ObscureKeystrokeTiming. This took an insane amount of time to
+# figure out.
+
+# See: https://gitlab.com/qemu-project/qemu/-/issues/2897
 biostest: $(ISOFINAL) | $(MMCIMAGE)
 	@[ ! -e "$(SRCDIR)/$(UVARSNAME)" ] && $(MAKE) $(SRCDIR)/$(UVARSNAME) || :
-	@echo 'VNC Viewer will attempt to connect to $(VNCDEF) in one second. Press ^C here to terminate.'
-	@( sleep 1; vncviewer $(VNCDEF) ) &
+	@echo '** WARNING ** -- If this boot hangs, turn off SSH "ObscureKeystrokeTiming" - See Makefile.isotest'
 	kvm -cpu $(KVMCPU) $(KVMACCEL) -smp cpus=$(KVMCPUS) -m $(KVMRAM) \
-	-display vnc=$(VNCDEF) $(KVMVGA) $(HWSMBIOS) \
+	$(KVMDISPLAY) $(KVMVGA) $(HWSMBIOS) \
 	-drive file=$<,if=none,id=cdrom,format=raw \
 	-device ide-cd,drive=cdrom,bootindex=1 \
 	-drive format=raw,file=$| $(BOOTMENU)
