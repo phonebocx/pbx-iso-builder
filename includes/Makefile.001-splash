@@ -39,6 +39,12 @@ export THEMENAME
 splash:
 	rm -f $(ALLSPLASHPNGS) $(SPLASHSVG) $(LIVESPLASHSVG)
 	$(MAKE) $(ALLSPLASHPNGS)
+	@echo Source is $(THEMEDIR)/splashsrc.svg and livesplashsrc.svg
+#	@echo Generated:  $(ALLSPLASHPNGS)
+	@echo ''
+	@echo 'To view generated and rendered splash png:'
+	@echo '  display $(SPLASHPNG)'
+	@echo ''
 
 $(SPLASHSVG): $(THEMEDIR)/splashsrc.svg
 	sed -e 's/__BUILD__/$(BUILD)/' -e 's/@RELEASE@/$(RELEASE)/' -e 's/@ARCHITECTURE@/amd64/' -e 's/@THEMENAME@/$(THEMENAME)/' < $< > $@
