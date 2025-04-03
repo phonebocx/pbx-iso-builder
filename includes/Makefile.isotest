@@ -53,12 +53,36 @@ KVMVGA=-vga vmware
 
 TESTUUID=36e26dd9-91a0-4547-b197-bf28ce57cfe9
 SMBIOS=-smbios type=1,manufacturer=HonestRob,product=IsoTest,version=31337,serial=01189998819991197253,uuid=$(TESTUUID)
-
 MMCIMAGE=/usr/local/build/mmcblk.raw
 
+# If this is running on a dev machine in AU, add a NFS automount to simplify testing
+# when testing. But if something has already created NFSHINT, leave it alone
+ifndef NFSHINT
+ifeq ($(shell ls -ald /sys/class/net/brvl10 2>/dev/null),)
+# Not in AU
+NFSHINT=
+else
 NFSSERVER=10.46.80.55
 NFSMOUNT=/livebuild/packages
-NFSSMBIOS=-smbios type=2,manufacturer=nfs,product=$(NFSSERVER),asset=$(NFSMOUNT)
+NFSHINT=$(NFSSERVER):$(NFSMOUNT)
+endif
+endif
+
+TESTDISKIMG=$(SRCDIR)/testdisk.raw
+TESTDISKPARAM=-drive format=raw,file=$(TESTDISKIMG),index=3
+
+ifdef HWSMBIOS
+TESTSMBIOS=$(HWSMBIOS)
+else
+TESTSMBIOS=$(SMBIOS)
+endif
+
+.PHONY: testdisk
+testdisk $(TESTDISKIMG):
+	@if [ "$(NFSHINT)" ]; then echo 'nfs:$(NFSHINT)' > $(TESTDISKIMG); else echo > $(TESTDISKIMG); fi
+	@truncate --size=1M $(TESTDISKIMG)
+	@echo Generated test disk image $(TESTDISKIMG):
+	@strings $(TESTDISKIMG)
 
 $(SRCDIR)/testimg.qcow2: | $(SRCDIR)/$(UVARSNAME)
 	qemu-img create -f qcow2 src/testimg.qcow2 80G
@@ -78,14 +102,14 @@ isotest: $(ISOFINAL) | $(SRCDIR)/testimg.qcow2 /etc/qemu/bridge.conf
 
 # This does not have full networking, and is purely to be a fast and
 # simple way to test the iso.
-test: $(ISOFINAL) | $(MMCIMAGE)
+test: $(ISOFINAL) | $(MMCIMAGE) $(TESTDISKIMG)
 	@[ ! -e "$(SRCDIR)/$(UVARSNAME)" ] && $(MAKE) $(SRCDIR)/$(UVARSNAME) || :
 	kvm -cpu $(KVMCPU) $(KVMACCEL) -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMDISPLAY) \
-	$(UEFIBOOT) $(KVMVGA) $(HWSMBIOS) \
-	$(NFSSMBIOS) \
+	$(UEFIBOOT) $(KVMVGA) $(TESTSMBIOS) \
 	-drive file=$<,if=none,id=cdrom,format=raw \
 	-device ide-cd,drive=cdrom,bootindex=1 \
-	-drive format=raw,file=$| $(BOOTMENU)
+	-drive format=raw,file=$(MMCIMAGE) \
+	$(TESTDISKPARAM) $(BOOTMENU)
 
 # Same for this, but this is in BIOS mode, not uefi.
 
@@ -94,15 +118,15 @@ test: $(ISOFINAL) | $(MMCIMAGE)
 # figure out.
 
 # See: https://gitlab.com/qemu-project/qemu/-/issues/2897
-biostest: $(ISOFINAL) | $(MMCIMAGE)
+biostest: $(ISOFINAL) | $(MMCIMAGE) $(TESTDISKIMG)
 	@[ ! -e "$(SRCDIR)/$(UVARSNAME)" ] && $(MAKE) $(SRCDIR)/$(UVARSNAME) || :
 	@echo '** WARNING ** -- If this boot hangs, turn off SSH "ObscureKeystrokeTiming" - See Makefile.isotest'
 	kvm -cpu $(KVMCPU) $(KVMACCEL) -smp cpus=$(KVMCPUS) -m $(KVMRAM) \
-	$(NFSSMBIOS) \
-	$(KVMDISPLAY) $(KVMVGA) $(HWSMBIOS) \
+	$(KVMDISPLAY) $(KVMVGA) $(TESTSMBIOS) \
 	-drive file=$<,if=none,id=cdrom,format=raw \
 	-device ide-cd,drive=cdrom,bootindex=1 \
-	-drive format=raw,file=$| $(BOOTMENU)
+	-drive format=raw,file=$(MMCIMAGE) \
+	$(TESTDISKPARAM) $(BOOTMENU)
 
 
 $(MMCIMAGE):
