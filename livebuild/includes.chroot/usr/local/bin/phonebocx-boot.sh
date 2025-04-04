@@ -8,7 +8,7 @@ export LANG=C.UTF-8
 # it should be a test disk (Created in Makefile.isotest). If it
 # contains a line starting with 'nfs:', that's telling us to mount
 # that to /pbxdev
-export TESTDISK=$(grep -l 2048 /sys/class/block/*/size | cut -d/ -f5)
+export TESTDISK=$(grep -l 2048 /sys/class/block/*/size | grep -v loop | cut -d/ -f5)
 if [ "$TESTDISK" ]; then
     mkdir -p /pbxdev
     # Found it. Does it have a nfs line?
