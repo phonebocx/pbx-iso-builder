@@ -89,6 +89,10 @@ PhoneBocx() {
     log_warning_msg "Can not find core initrd hook"
     return
   fi
+  if grep -q ' nohooks' /proc/cmdline; then
+    log_warning_msg "Not running any hooks, 'nohooks' was on cmdline. Would have run '$tbase/core/meta/hooks/initrd'"
+    return
+  fi
   log_begin_msg "Running core initrd hook '$tbase/core/meta/hooks/initrd'"
   . $tbase/core/meta/hooks/initrd
   log_end_msg
