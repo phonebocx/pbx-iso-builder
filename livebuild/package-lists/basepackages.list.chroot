@@ -11,6 +11,7 @@ sqlite3
 anacron
 nfs-client
 grub-efi-amd64
+grub-pc-bin
 tcpdump
 gdisk
 parted

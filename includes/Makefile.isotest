@@ -51,9 +51,18 @@ UEFIBOOT=$(UCODE) $(UVARS)
 #    https://askubuntu.com/questions/1234203/video-problems-with-efi-boot-on-kvm-qemu
 KVMVGA=-vga vmware
 
+# Random UUID for testing
 TESTUUID=36e26dd9-91a0-4547-b197-bf28ce57cfe9
 SMBIOS=-smbios type=1,manufacturer=HonestRob,product=IsoTest,version=31337,serial=01189998819991197253,uuid=$(TESTUUID)
+
+# This one disables crypto completely, as it's magic (See real-boot.sh)
+DTESTUUID=12345678-1234-5678-901b-cddeefaabbcc
+DSMBIOS=-smbios type=1,manufacturer=HonestRob,product=IsoTest,version=31337,serial=01189998819991197253,uuid=$(DTESTUUID)
+
 MMCIMAGE=/usr/local/build/mmcblk.raw
+
+# Always prompt for the boot device
+BOOTMENU=-boot menu=on
 
 # If this is running on a dev machine in AU, add a NFS automount to simplify testing
 # when testing. But if something has already created NFSHINT, leave it alone
@@ -76,6 +85,8 @@ ifdef HWSMBIOS
 TESTSMBIOS=$(HWSMBIOS)
 else
 TESTSMBIOS=$(SMBIOS)
+# REMOVEME: Disable crypto when testing
+TESTSMBIOS=$(DSMBIOS)
 endif
 
 .PHONY: testdisk
