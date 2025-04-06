@@ -61,8 +61,11 @@ DSMBIOS=-smbios type=1,manufacturer=HonestRob,product=IsoTest,version=31337,seri
 
 MMCIMAGE=/usr/local/build/mmcblk.raw
 
-# Always prompt for the boot device
-BOOTMENU=-boot menu=on
+# Always prompt for the boot device in BIOS and UEFI, and boot
+# the first time the kvm is started from the CDROM image. After that,
+# it'll boot to the first boot device (which should be MMCIMAGE above)
+UEFIBOOTMENU=-boot menu=on,once=d
+BOOTMENU=-boot menu=on,once=d
 
 # If this is running on a dev machine in AU, add a NFS automount to simplify testing
 # when testing. But if something has already created NFSHINT, leave it alone
@@ -80,7 +83,7 @@ endif
 
 TESTDISKIMG=$(SRCDIR)/testdisk.raw
 TESTDISKPARAM=-drive format=raw,file=$(TESTDISKIMG),if=virtio,index=5
-MMCDISKPARAM= -drive format=raw,file=$(MMCIMAGE),if=virtio,index=3
+MMCDISKPARAM= -drive format=raw,file=$(MMCIMAGE),if=virtio,index=1
 
 ifdef HWSMBIOS
 TESTSMBIOS=$(HWSMBIOS)
@@ -120,16 +123,13 @@ test: $(ISOFINAL) | $(MMCIMAGE) $(TESTDISKIMG)
 	kvm -cpu $(KVMCPU) $(KVMACCEL) -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMDISPLAY) \
 	$(UEFIBOOT) $(KVMVGA) $(TESTSMBIOS) \
 	-drive file=$<,if=none,id=cdrom,format=raw \
-	-device ide-cd,drive=cdrom,bootindex=1 \
+	-device ide-cd,drive=cdrom \
 	$(MMCDISKPARAM) \
-	$(TESTNETCONF) $(TESTDISKPARAM) $(BOOTMENU)
-
-# Same for this, but this is in BIOS mode, not uefi.
+	$(TESTNETCONF) $(TESTDISKPARAM) $(UEFIBOOTMENU)
 
 # WARNING: If this hangs, or is really slow, you need to turn off
 # SSH ObscureKeystrokeTiming. This took an insane amount of time to
 # figure out.
-
 # See: https://gitlab.com/qemu-project/qemu/-/issues/2897
 biostest: $(ISOFINAL) | $(MMCIMAGE) $(TESTDISKIMG)
 	@[ ! -e "$(SRCDIR)/$(UVARSNAME)" ] && $(MAKE) $(SRCDIR)/$(UVARSNAME) || :
@@ -137,7 +137,7 @@ biostest: $(ISOFINAL) | $(MMCIMAGE) $(TESTDISKIMG)
 	kvm -cpu $(KVMCPU) $(KVMACCEL) -smp cpus=$(KVMCPUS) -m $(KVMRAM) \
 	$(KVMDISPLAY) $(KVMVGA) $(TESTSMBIOS) \
 	-drive file=$<,if=none,id=cdrom,format=raw \
-	-device ide-cd,drive=cdrom,bootindex=1 \
+	-device ide-cd,drive=cdrom \
 	$(MMCDISKPARAM) \
 	$(TESTNETCONF) $(TESTDISKPARAM) $(BOOTMENU)
 
