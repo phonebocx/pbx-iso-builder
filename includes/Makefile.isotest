@@ -1,7 +1,11 @@
 TOOLS += kvm vncviewer
 PKG_kvm=qemu-system-x86
 
-# This needs some manual host wrangling before it will work.
+# Display is provided by imagemagick
+PREREQS += /usr/bin/display
+PKG_display=imagemagick
+
+# This needs some manual host wrangling before 'make test' will work. Be warned!
 #
 #  apt-get -y install qemu-kvm qemu-utils
 #  Enable ip forwarding in /etc/sysctl

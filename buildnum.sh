@@ -1,13 +1,13 @@
 #/bin/bash
 
-# This is where this script is
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-
-# This is where our build markers are kept
-BUILDDIR="$DIR/.builds"
+if [ ! "$BUILDREF" ]; then
+	# This is where this script is
+	DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+	BUILDREF="$DIR/.builds"
+fi
 
 # Make it if it's missing.
-[ ! -d "$BUILDDIR" ] && mkdir -p "$BUILDDIR"
+[ ! -d "$BUILDREF" ] && mkdir -p "$BUILDREF"
 
 # Make sure the branch is YYYY.MM.DD format
 BRANCH=$1
@@ -16,7 +16,7 @@ if [[ ! "$BRANCH" =~ ^20[0-9\.]{5}$ ]]; then
 fi
 
 # This is where it's going
-BUILDFILE="$BUILDDIR/$BRANCH"
+BUILDFILE="$BUILDREF/$BRANCH"
 
 # If it doesn't exist, this is build 1
 if [ ! -e "$BUILDFILE" ]; then
