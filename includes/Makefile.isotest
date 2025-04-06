@@ -72,14 +72,15 @@ ifeq ($(shell ls -ald /sys/class/net/brvl10 2>/dev/null),)
 NFSHINT=
 else
 NFSSERVER=10.46.80.55
-NFSMOUNT=/livebuild/packages
+NFSMOUNT=/livebuild/pbxpackages
 NFSHINT=$(NFSSERVER):$(NFSMOUNT)
 TESTNETCONF=-net nic,model=virtio,macaddr=52:54:00:00:00:01 -net bridge,br=brvl10
 endif
 endif
 
 TESTDISKIMG=$(SRCDIR)/testdisk.raw
-TESTDISKPARAM=-drive format=raw,file=$(TESTDISKIMG),index=3
+TESTDISKPARAM=-drive format=raw,file=$(TESTDISKIMG),if=virtio,index=5
+MMCDISKPARAM= -drive format=raw,file=$(MMCIMAGE),if=virtio,index=3
 
 ifdef HWSMBIOS
 TESTSMBIOS=$(HWSMBIOS)
@@ -120,7 +121,7 @@ test: $(ISOFINAL) | $(MMCIMAGE) $(TESTDISKIMG)
 	$(UEFIBOOT) $(KVMVGA) $(TESTSMBIOS) \
 	-drive file=$<,if=none,id=cdrom,format=raw \
 	-device ide-cd,drive=cdrom,bootindex=1 \
-	-drive format=raw,file=$(MMCIMAGE) \
+	$(MMCDISKPARAM) \
 	$(TESTNETCONF) $(TESTDISKPARAM) $(BOOTMENU)
 
 # Same for this, but this is in BIOS mode, not uefi.
@@ -137,7 +138,7 @@ biostest: $(ISOFINAL) | $(MMCIMAGE) $(TESTDISKIMG)
 	$(KVMDISPLAY) $(KVMVGA) $(TESTSMBIOS) \
 	-drive file=$<,if=none,id=cdrom,format=raw \
 	-device ide-cd,drive=cdrom,bootindex=1 \
-	-drive format=raw,file=$(MMCIMAGE) \
+	$(MMCDISKPARAM) \
 	$(TESTNETCONF) $(TESTDISKPARAM) $(BOOTMENU)
 
 
