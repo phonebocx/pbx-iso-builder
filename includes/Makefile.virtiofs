@@ -5,7 +5,9 @@ VIRTIOFSD=$(shell ls $(VFSEXEC) 2>/dev/null)
 # If it exists, we want to use it!
 ifneq ($(VIRTIOFSD),)
 
-VFSDIR=$(BUILDROOT)/packages
+# This can be overridden by a theme or parent
+VFSDIR ?= $(BUILDROOT)/packages
+
 VFSPACKAGES=$(addprefix $(VFSDIR)/,$(IMMUTABLEPACKAGES))
 VFSPACKAGESGIT=$(addsuffix /.git,$(VFSPACKAGES))
 # Don't delete them, even though they're 'temporary' according to Make
@@ -25,10 +27,10 @@ VFSPIDFILE=/run/virtiofsd/$(subst /,.,$(VFSSOCKET)).pid
 # Always check if its running, start it if it's not
 .PHONY: $(VFSPIDFILE)
 $(VFSPIDFILE): $(VFSPACKAGES)
-	@P=$$(cat $(VFSPIDFILE) 2>/dev/null || echo 1); grep -q $(VFSSOCKET) /proc/$$P/cmdline 2>/dev/null || ( echo "Starting '$(VFSCMD)'"; nohup $(VFSCMD) > /tmp/vfslog & )
+	@P=$$(cat $(VFSPIDFILE) 2>/dev/null || echo 1); grep -q $(VFSSOCKET) /proc/$$P/cmdline 2>/dev/null || ( $(VFSCMD) > /tmp/vfslog 2>&1 & )
 
 $(VFSDIR)/%: $(VFSDIR)/%/.git
-	@if [ -e "$@/Makefile" ]; then cd $@; make install; fi
+	@if [ -e "$@/Makefile" ]; then cd $@; $(MAKE) -s install; fi
 
 # Basically the same as Makefile.helpers
 $(VFSDIR)/%/.git:
