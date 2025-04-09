@@ -1,10 +1,11 @@
 SHELL=/bin/bash
 BUILDROOT := $(shell pwd)
-BUILDUTIME := $(shell date +%s)
+BUILDUTIME ?= $(shell date +%s)
 BRANCH ?= $(shell date +%Y.%m)
 BUILDNUM ?= $(shell $(BUILDROOT)/buildnum.sh $(BRANCH))
+BUILDSTAMP ?= $(shell $(BUILDROOT)/buildnum.sh $(BRANCH) --date)
 BUILD ?= $(BRANCH)-$(shell printf "%03d" $(BUILDNUM))
-export BUILD BRANCH BUILDNUM BUILDROOT BUILDUTIME
+export BUILD BRANCH BUILDNUM BUILDROOT BUILDUTIME BUILDSTAMP
 
 ASTVER ?= 22.3.0
 ASTBUILDNUM ?= 1

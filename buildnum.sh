@@ -32,5 +32,9 @@ if [[ "$2" == --inc* ]]; then
   echo $BUILDNUM > $BUILDFILE
 fi
 
-echo $BUILDNUM
+if [[ "$2" == --date ]]; then
+  date --date=@$(stat --format=%Y $BUILDFILE) --utc
+else
+  echo $BUILDNUM
+fi
 

@@ -46,8 +46,13 @@ splash:
 	@echo '  display $(SPLASHPNG)'
 	@echo ''
 
+SEDVARS=-e 's/__BUILD__/$(BUILD)/' -e 's/@RELEASE@/$(RELEASE)/' -e 's/@ARCHITECTURE@/amd64/' -e 's/@THEMENAME@/$(THEMENAME)/' \
+	-e 's/@BUILDNUM@/$(BUILDNUM)/' -e 's/@BUILDSTAMP@/$(BUILDSTAMP)/' -e 's/@BUILDUTIME@/$(BUILDUTIME)/' \
+	-e 's/@BUILDHUMAN@/$(shell date --date=@$(BUILDUTIME) --utc)/'
+
+
 $(SPLASHSVG): $(THEMEDIR)/splashsrc.svg
-	sed -e 's/__BUILD__/$(BUILD)/' -e 's/@RELEASE@/$(RELEASE)/' -e 's/@ARCHITECTURE@/amd64/' -e 's/@THEMENAME@/$(THEMENAME)/' < $< > $@
+	sed $(SEDVARS) < $< > $@
 
 $(SPLASHPNG): $(SPLASHSVG) $(THEMEFONTDESTS)
 	rsvg-convert --format png --height 600 --width 800 $< -o $@
@@ -56,7 +61,7 @@ $(SPLASHLARGEPNG): $(SPLASHSVG) $(THEMEFONTDESTS)
 	rsvg-convert --format png --height 768 --width 1024 $< -o $@
 
 $(LIVESPLASHSVG): $(THEMEDIR)/livesplashsrc.svg
-	sed -e 's/__BUILD__/$(BUILD)/' -e 's/@RELEASE@/$(RELEASE)/' -e 's/@ARCHITECTURE@/amd64/' -e 's/@THEMENAME@/$(THEMENAME)/' < $< > $@
+	sed $(SEDVARS) < $< > $@
 
 $(LIVESPLASHPNG): $(LIVESPLASHSVG) $(THEMEFONTDESTS)
 	rsvg-convert --format png --height 600 --width 800 $< -o $@
