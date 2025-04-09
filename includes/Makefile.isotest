@@ -124,18 +124,21 @@ isotest: $(ISOFINAL) | $(SRCDIR)/testimg.qcow2 /etc/qemu/bridge.conf
 # simple way to test the iso.
 test: $(ISOFINAL) | $(MMCIMAGE) $(TESTDISKIMG)
 	@[ ! -e "$(SRCDIR)/$(UVARSNAME)" ] && $(MAKE) $(SRCDIR)/$(UVARSNAME) || :
+	@[ "$(KVMPREREQS)" ] && make $(KVMPREREQS)
 	kvm -cpu $(KVMCPU) $(KVMACCEL) -smp cpus=$(KVMCPUS) -m $(KVMRAM) $(KVMDISPLAY) \
 	$(UEFIBOOT) $(KVMVGA) $(TESTSMBIOS) \
 	-drive file=$<,if=none,id=cdrom,format=raw \
 	-device ide-cd,drive=cdrom \
 	$(MMCDISKPARAM) \
-	$(TESTNETCONF) $(TESTDISKPARAM) $(UEFIBOOTMENU)
+	$(TESTNETCONF) $(TESTDISKPARAM) $(UEFIBOOTMENU) \
+	$(QEMUEXTRA)
 
 # WARNING: If this hangs, or is really slow, you need to turn off
 # SSH ObscureKeystrokeTiming. This took an insane amount of time to
 # figure out.
 # See: https://gitlab.com/qemu-project/qemu/-/issues/2897
 biostest: $(ISOFINAL) | $(MMCIMAGE) $(TESTDISKIMG)
+	@[ "$(KVMPREREQS)" ] && make $(KVMPREREQS)
 	@[ ! -e "$(SRCDIR)/$(UVARSNAME)" ] && $(MAKE) $(SRCDIR)/$(UVARSNAME) || :
 	@echo '** WARNING ** -- If this boot hangs, turn off SSH "ObscureKeystrokeTiming" - See Makefile.isotest'
 	kvm -cpu $(KVMCPU) $(KVMACCEL) -smp cpus=$(KVMCPUS) -m $(KVMRAM) \
@@ -143,7 +146,8 @@ biostest: $(ISOFINAL) | $(MMCIMAGE) $(TESTDISKIMG)
 	-drive file=$<,if=none,id=cdrom,format=raw \
 	-device ide-cd,drive=cdrom \
 	$(MMCDISKPARAM) \
-	$(TESTNETCONF) $(TESTDISKPARAM) $(BOOTMENU)
+	$(TESTNETCONF) $(TESTDISKPARAM) $(BOOTMENU) \
+	$(QEMUEXTRA)
 
 
 $(MMCIMAGE):

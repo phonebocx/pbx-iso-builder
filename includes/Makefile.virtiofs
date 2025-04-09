@@ -1,0 +1,48 @@
+# If virtiofsd is installed on this machine, use it
+VFSEXEC=/usr/lib/qemu/virtiofsd
+VIRTIOFSD=$(shell ls $(VFSEXEC) 2>/dev/null)
+
+# If it exists, we want to use it!
+ifneq ($(VIRTIOFSD),)
+
+VFSDIR=$(BUILDROOT)/.virtfs
+VFSPACKAGES=$(addprefix $(VFSDIR)/,$(IMMUTABLEPACKAGES))
+VFSPACKAGESGIT=$(addsuffix /.git,$(VFSPACKAGES))
+
+VFSSOCKET=/tmp/vio-$(THEMENAME)
+VFSSOURCE=$(VFSDIR)
+
+VFSCMD=$(VFSEXEC) --socket-path=$(VFSSOCKET) -o source=$(VFSSOURCE) -o cache=always
+VFSPIDFILE=/run/virtiofsd/$(subst /,.,$(VFSSOCKET)).pid
+
+# Always check if its running, start it if it's not
+.PHONY: $(VFSPIDFILE)
+$(VFSPIDFILE): $(VFSPACKAGES)
+	@P=$$(cat $(VFSPIDFILE) 2>/dev/null || echo 1); grep -q $(VFSSOCKET) /proc/$$P/cmdline 2>/dev/null || ( echo "Starting '$(VFSCMD)'"; nohup $(VFSCMD) > /tmp/vfslog & )
+
+# Basically the same as Makefile.helpers
+$(VFSDIR)/%/.git:
+	if [ ! -d $(@D) ]; then mkdir -p src; git clone --recursive $(GITSRC_immutable-$*) $(@D); fi
+	cd $(@D) && git pull; [ "$(GITBRANCH_$*)" ] && git checkout $(GITBRANCH_$*) || git checkout master
+
+# Always ignore timestamps, we only care if it exists
+$(VFSDIR)/%: | $(VFSDIR)/%/.git
+
+KVMPREREQS += $(VFSPIDFILE)
+# This appears to be the only way to get vfs to work, by explicitly setting the memory to be
+# a file. See https://virtio-fs.gitlab.io/howto-qemu.html for the exact config I had to
+# copy to make it work!
+QEMUMEM=-object memory-backend-file,id=mem,size=$(KVMRAM),mem-path=/dev/shm,share=on -numa node,memdev=mem
+
+QEMUEXTRA += $(QEMUMEM) -chardev socket,id=char0,path=$(VFSSOCKET) -device vhost-user-fs-pci,queue-size=1024,chardev=char0,tag=vloopback
+
+.PHONY: vfs
+vfs: $(VFSPACKAGES) $(VFSPIDFILE) | $(VFSDIR)
+	@echo Using vfs loopback mounts
+
+else
+vfs:
+	@echo -e 'No virtiofsd, can not use loopback\nTo use:\n    apt-get install qemu-system-common\n'; exit 9
+endif
+
+

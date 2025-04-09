@@ -14,8 +14,8 @@ export ASTVER ASTBUILDNUM
 .SECONDEXPANSION:
 
 # This is exported for use by the pbx-kernel-builder toolset
-KERNELVER=6.6.83
-KERNELREL=2
+KERNELVER=6.6.86
+KERNELREL=1
 KFIRMWARE=20240610
 # This is used by pbx-kernel-builder
 CPUTYPE ?= generic

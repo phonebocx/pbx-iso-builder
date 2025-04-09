@@ -1,3 +1,6 @@
 [submodule "asteriskbuild"]
 	path = asteriskbuild
 	url = git@github.com:phonebocx/asteriskbuild.git
+[submodule "pbx-kernel-builder"]
+	path = submodules/pbx-kernel-builder
+	url = git@github.com:phonebocx/pbx-kernel-builder.git

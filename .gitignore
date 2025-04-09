@@ -7,3 +7,4 @@ packages
 /isos
 # Do not checkin build stamps
 .builds
+.virtfs

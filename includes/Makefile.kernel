@@ -5,7 +5,10 @@ LIBCDEB=linux-libc-dev_$(KERNELVER)-$(KERNELREL)_amd64.deb
 HEADERSDEB=linux-headers-$(KERNELVER)-$(KERNELREL)_$(KERNELVER)-$(KERNELREL)_amd64.deb
 KERNELDEBNAMES=$(KERNELDEB) $(LIBCDEB) $(HEADERSDEB)
 KERNELDEBS=$(addprefix $(DEBDEST)/,$(KERNELDEBNAMES))
-GITSRC_pbx-kernel-builder=git@github.com:phonebocx/pbx-kernel-builder.git
+
+# Note this USED to be a non-checked-in git repo, but it was impossible
+# to keep it in sync, so this is now a submodule
+KERNELSUBMODULE=$(BUILDROOT)/submodules/pbx-kernel-builder
 
 ALLISODEBS += $(KERNELDEBS)
 
@@ -13,12 +16,15 @@ export KERNELDEBS
 
 PREREQS += $(KERNELDEBS)
 
-$(KERNELDEBS): src/pbx-kernel-builder/kernel/$(KERNELDEB)
+$(KERNELDEBS): $(KERNELSUBMODULE)/kernel/$(KERNELDEB)
 	mkdir -p $(@D)
-	cp src/pbx-kernel-builder/kernel/$(@F) $@
+	cp $(KERNELSUBMODULE)/kernel/$(@F) $@
 
-src/pbx-kernel-builder/kernel/$(KERNELDEB): src/pbx-kernel-builder/.git | /usr/lib/x86_64-linux-gnu/libelf.a
-	cd src/pbx-kernel-builder && make deb
+$(KERNELSUBMODULE)/kernel/$(KERNELDEB): $(KERNELSUBMODULE)/.git | /usr/lib/x86_64-linux-gnu/libelf.a
+	cd $(KERNELSUBMODULE) && make deb
+
+$(KERNELSUBMODULE)/.git:
+	@echo "pbx-kernel-builder is now a submodule. Update your repo"; exit 99
 
 /usr/lib/x86_64-linux-gnu/libelf.a:
 	@apt-get -y install libelf-dev
