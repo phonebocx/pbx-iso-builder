@@ -1,4 +1,4 @@
-TOOLS += kvm vncviewer
+TOOLS += kvm
 PKG_kvm=qemu-system-x86
 
 # Display is provided by imagemagick
