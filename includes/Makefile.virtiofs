@@ -5,9 +5,11 @@ VIRTIOFSD=$(shell ls $(VFSEXEC) 2>/dev/null)
 # If it exists, we want to use it!
 ifneq ($(VIRTIOFSD),)
 
-VFSDIR=$(BUILDROOT)/.virtfs
+VFSDIR=$(BUILDROOT)/packages
 VFSPACKAGES=$(addprefix $(VFSDIR)/,$(IMMUTABLEPACKAGES))
 VFSPACKAGESGIT=$(addsuffix /.git,$(VFSPACKAGES))
+# Don't delete them, even though they're 'temporary' according to Make
+.PRECIOUS: $(VFSPACKAGESGIT)
 
 VFSSOCKET=/tmp/vio-$(THEMENAME)
 VFSSOURCE=$(VFSDIR)
@@ -22,11 +24,13 @@ $(VFSPIDFILE): $(VFSPACKAGES)
 
 # Basically the same as Makefile.helpers
 $(VFSDIR)/%/.git:
-	if [ ! -d $(@D) ]; then mkdir -p src; git clone --recursive $(GITSRC_immutable-$*) $(@D); fi
+	if [ ! -d $(@D) ]; then mkdir -p $(VFSDIR); git clone --recursive $(GITSRC_immutable-$*) $(@D); fi
 	cd $(@D) && git pull; [ "$(GITBRANCH_$*)" ] && git checkout $(GITBRANCH_$*) || git checkout master
 
-# Always ignore timestamps, we only care if it exists
+# Always ignore timestamps, we only care if it exists. We need an actual
+# task to do, otherwise it doesn't run. Sometimes make confuses me.
 $(VFSDIR)/%: | $(VFSDIR)/%/.git
+	@echo Checked $@
 
 KVMPREREQS += $(VFSPIDFILE)
 # This appears to be the only way to get vfs to work, by explicitly setting the memory to be
