@@ -11,6 +11,11 @@ VFSPACKAGESGIT=$(addsuffix /.git,$(VFSPACKAGES))
 # Don't delete them, even though they're 'temporary' according to Make
 .PRECIOUS: $(VFSPACKAGESGIT)
 
+# Default bindmount unless overridden
+ifndef BINDMOUNT
+BINDMOUNT=/pbxdev
+endif
+
 VFSSOCKET=/tmp/vio-$(THEMENAME)
 VFSSOURCE=$(VFSDIR)
 
@@ -22,23 +27,25 @@ VFSPIDFILE=/run/virtiofsd/$(subst /,.,$(VFSSOCKET)).pid
 $(VFSPIDFILE): $(VFSPACKAGES)
 	@P=$$(cat $(VFSPIDFILE) 2>/dev/null || echo 1); grep -q $(VFSSOCKET) /proc/$$P/cmdline 2>/dev/null || ( echo "Starting '$(VFSCMD)'"; nohup $(VFSCMD) > /tmp/vfslog & )
 
+$(VFSDIR)/%: $(VFSDIR)/%/.git
+	@if [ -e "$@/Makefile" ]; then cd $@; make install; fi
+
 # Basically the same as Makefile.helpers
 $(VFSDIR)/%/.git:
 	if [ ! -d $(@D) ]; then mkdir -p $(VFSDIR); git clone --recursive $(GITSRC_immutable-$*) $(@D); fi
 	cd $(@D) && git pull; [ "$(GITBRANCH_$*)" ] && git checkout $(GITBRANCH_$*) || git checkout master
 
-# Always ignore timestamps, we only care if it exists. We need an actual
-# task to do, otherwise it doesn't run. Sometimes make confuses me.
-$(VFSDIR)/%: | $(VFSDIR)/%/.git
-	@echo Checked $@
-
-KVMPREREQS += $(VFSPIDFILE)
 # This appears to be the only way to get vfs to work, by explicitly setting the memory to be
 # a file. See https://virtio-fs.gitlab.io/howto-qemu.html for the exact config I had to
 # copy to make it work!
 QEMUMEM=-object memory-backend-file,id=mem,size=$(KVMRAM),mem-path=/dev/shm,share=on -numa node,memdev=mem
 
 QEMUEXTRA += $(QEMUMEM) -chardev socket,id=char0,path=$(VFSSOCKET) -device vhost-user-fs-pci,queue-size=1024,chardev=char0,tag=vloopback
+
+$(VFSDIR)/bindmount:
+	@echo '$(BINDMOUNT)' > $@
+
+KVMPREREQS += $(VFSPIDFILE) $(VFSDIR)/bindmount
 
 .PHONY: vfs
 vfs: $(VFSPACKAGES) $(VFSPIDFILE) | $(VFSDIR)
