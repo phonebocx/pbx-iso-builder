@@ -16,6 +16,10 @@ PKG_display=imagemagick
 
 KVMRAM=2G
 KVMCPUS=2
+
+IMGSIZE ?= 80G
+MMCIMAGE=/usr/local/build/mmcblk-$(IMGSIZE).raw
+
 # You can set various CPU emulation types here. The list of known
 # CPU types is here:
 #   https://qemu-project.gitlab.io/qemu/system/qemu-cpu-models.html
@@ -63,7 +67,6 @@ SMBIOS=-smbios type=1,manufacturer=HonestRob,product=IsoTest,version=31337,seria
 DTESTUUID=12345678-1234-5678-901b-cddeefaabbcc
 DSMBIOS=-smbios type=1,manufacturer=HonestRob,product=IsoTest,version=31337,serial=01189998819991197253,uuid=$(DTESTUUID)
 
-MMCIMAGE=/usr/local/build/mmcblk.raw
 
 # Always prompt for the boot device in BIOS and UEFI, and boot
 # the first time the kvm is started from the CDROM image. After that,
@@ -71,31 +74,40 @@ MMCIMAGE=/usr/local/build/mmcblk.raw
 UEFIBOOTMENU=-boot menu=on,once=d
 BOOTMENU=-boot menu=on,once=d
 
-# If this is running on a dev machine in AU, add a NFS automount to simplify testing
-# when testing. But if something has already created NFSHINT, leave it alone
-ifndef NFSHINT
+# If this has a 'brvl10' interface, that's a magic interface on xrobau's
+# dev machines. Use that as a bridge, with one interface.
 ifeq ($(shell ls -ald /sys/class/net/brvl10 2>/dev/null),)
-# Not in AU
-NFSHINT=
+TESTNETCONF=
+TESTDISKIMG=
+TESTDISKPARAM=
 else
-NFSSERVER=10.46.80.55
-NFSMOUNT=/livebuild/pbxpackages
-NFSHINT=$(NFSSERVER):$(NFSMOUNT)
 TESTNETCONF=-net nic,model=virtio,macaddr=52:54:00:00:00:01 -net bridge,br=brvl10
-endif
+# Don't bother with nfs hints, as the virtiofs is much more flexible and
+# easy to use. However, this is left here in case someone else wants to
+# use it in the future.
+#NFSSERVER=10.46.80.55
+#NFSMOUNT=/livebuild/pbxpackages
+#NFSHINT=$(NFSSERVER):$(NFSMOUNT)
+#TESTDISKIMG=$(SRCDIR)/testdisk.raw
+#TESTDISKPARAM=-drive format=raw,file=$(TESTDISKIMG),if=virtio,index=5
+TESTDISKIMG=
+TESTDISKPARAM=
 endif
 
-TESTDISKIMG=$(SRCDIR)/testdisk.raw
-TESTDISKPARAM=-drive format=raw,file=$(TESTDISKIMG),if=virtio,index=5
-MMCDISKPARAM= -drive format=raw,file=$(MMCIMAGE),if=virtio,index=1
+MMCDISKPARAM=-drive format=raw,file=$(MMCIMAGE),if=virtio,index=1
 
 ifdef HWSMBIOS
 TESTSMBIOS=$(HWSMBIOS)
 else
 TESTSMBIOS=$(SMBIOS)
 # REMOVEME: Disable crypto when testing
-TESTSMBIOS=$(DSMBIOS)
+#TESTSMBIOS=$(DSMBIOS)
 endif
+
+# This creates/resizes the testvm's block device image. It's
+# defined above as 'MMCIMAGE=/usr/local/build/mmcblk-$(IMGSIZE).raw'
+$(MMCIMAGE):
+	truncate --size=$(IMGSIZE) $(MMCIMAGE)
 
 .PHONY: testdisk
 testdisk $(TESTDISKIMG):
@@ -148,10 +160,6 @@ biostest: $(ISOFINAL) | $(MMCIMAGE) $(TESTDISKIMG)
 	$(MMCDISKPARAM) \
 	$(TESTNETCONF) $(TESTDISKPARAM) $(BOOTMENU) \
 	$(QEMUEXTRA)
-
-
-$(MMCIMAGE):
-	truncate --size=32G $(MMCIMAGE)
 
 /etc/qemu/bridge.conf:
 	@echo 'ERROR: '

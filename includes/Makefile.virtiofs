@@ -10,6 +10,18 @@ VFSDIR ?= $(BUILDROOT)/packages
 
 VFSPACKAGES=$(addprefix $(VFSDIR)/,$(IMMUTABLEPACKAGES))
 VFSPACKAGESGIT=$(addsuffix /.git,$(VFSPACKAGES))
+
+# If there are any debug hooks in this theme to help with initrd debugging,
+# add them automatically to VFSDIR so they're picked up by virtiofs.
+#
+# These are run by livebuild/includes.chroot/usr/lib/live/boot/9990-main.sh
+THEMEDEBUGHOOKS=$(wildcard $(THEMEDIR)/debug-hooks/*)
+DEBUGHOOKS=$(addprefix $(VFSDIR)/,$(notdir $(THEMEDEBUGHOOKS)))
+
+$(VFSDIR)/%: $(THEMEDIR)/debug-hooks/%
+	@echo Updating local debug hook $(@F)
+	@cp $< $@
+
 # Don't delete them, even though they're 'temporary' according to Make
 .PRECIOUS: $(VFSPACKAGESGIT)
 
@@ -21,12 +33,12 @@ endif
 VFSSOCKET=/tmp/vio-$(THEMENAME)
 VFSSOURCE=$(VFSDIR)
 
-VFSCMD=$(VFSEXEC) --socket-path=$(VFSSOCKET) -o source=$(VFSSOURCE) -o cache=always
+VFSCMD=$(VFSEXEC) --socket-path=$(VFSSOCKET) -o source=$(VFSSOURCE) -o cache=none
 VFSPIDFILE=/run/virtiofsd/$(subst /,.,$(VFSSOCKET)).pid
 
 # Always check if its running, start it if it's not
 .PHONY: $(VFSPIDFILE)
-$(VFSPIDFILE): $(VFSPACKAGES)
+$(VFSPIDFILE): $(VFSPACKAGES) $(DEBUGHOOKS)
 	@P=$$(cat $(VFSPIDFILE) 2>/dev/null || echo 1); grep -q $(VFSSOCKET) /proc/$$P/cmdline 2>/dev/null || ( $(VFSCMD) > /tmp/vfslog 2>&1 & )
 
 $(VFSDIR)/%: $(VFSDIR)/%/.git

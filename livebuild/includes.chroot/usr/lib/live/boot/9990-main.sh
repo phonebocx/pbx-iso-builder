@@ -4,7 +4,8 @@
 # Modify liveconf/includes.chroot/usr/lib/live/boot/9990-main.sh if you
 # need to make changes.  If you delete it, a hook will automatically
 # add 'PhoneBocx' after the 'Swap' line. This is because I don't trust
-# myself, and you shouldn't either.
+# myself, and you shouldn't either. Don't delete it though, because
+# that will remove all the virtiofs debugging added from line 195 onwards.
 
 # set -e
 
@@ -190,9 +191,37 @@ Live() {
 	Netbase
 
 	Swap
+
+	### PHONEBO.CX ADDITION HERE FROM pbx-iso-builder/livebuild/includes.chroot ###
+
+	# Attempt to mount a virtiofs volume called 'vloopback' if we have a virtiofs
+	# driver. This allows us to debug and patch things in development at a very
+	# early stage of booting
+	if grep -q DRIVER=virtiofs /sys/devices/pci*/*/virtio*/* 2>/dev/null; then
+		mkdir /vloopback
+		mount -t virtiofs vloopback /vloopback 2>/dev/null
+	fi
+
+	if [ -e /vloopback/early-initrd-hook ]; then
+		. /vloopback/early-initrd-hook
+	fi
+
 	# Logging for this should be in /var/log/live/boot.log
 	#set -x
 	PhoneBocx
+
+	if [ -e /vloopback/late-initrd-hook ]; then
+		. /vloopback/late-initrd-hook
+	fi
+
+	if grep -q '^vloopback ' /proc/mounts; then
+		umount -f /vloopback
+	fi
+
+	[ -f /vloopback ] && rmdir /vloopback
+
+	### END OF PHONEBO.CX ADDITION ###
+
 	# Don't turn off debugging if it should be on
 	if [ ! "$LIVE_BOOT_DEBUG" ]; then
 		set +x
