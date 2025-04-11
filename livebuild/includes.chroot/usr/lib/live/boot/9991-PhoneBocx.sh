@@ -39,25 +39,31 @@ PhoneBocx() {
 
   tbase=/root/pbx
   if [ -d "$pdir" ]; then
-    # If there are any new.*.sha256 files, move them into place
-    # now, before they're mounted. The file will only be there if
-    # the download was successfully completed
-    for n in $pdir/new.*.sha256; do
+    # If there are any new.*.squashfs files, move them into place
+    # now, before they're mounted.
+    # The file should only be there if the download was successfully
+    # completed. However, check to make sure they are actually squashfs
+    # filesystems just to make sure nothing is corrupt
+    for n in $pdir/new.*.squashfs; do
+      # Wildcard check
       if [ -e $n ]; then
-        # Wildcard
+        # We have some new files
         mount -o remount,rw $mroot
-        w=$(echo $n | sed 's/.sha256//')
-        for x in ${w}*; do
-          i=$(echo $x | sed 's/new.//')
-          rm -f $i
-          mv $x $i
-        done
+        smagic="68737173" # "hsqs"
+        fmagic=$(xxd -p -l4 $n)
+        if [ "$smagic" == "$fmagic" ]; then
+          # This is a squashfs image. Rename new.X to X
+          for x in ${n}*; do
+            i=$(echo $x | sed 's/new.//')
+            rm -f $i
+            mv $x $i
+          done
+        fi
+        # Nuke any old things that were partially downloaded and not
+        # picked up by the move above
+        rm -rf $pdir/new.*
       fi
     done
-    # Nuke any old things that were partially downloaded and not
-    # picked up by the move above
-    rm -rf $pdir/new.*
-
     # If we had mounted it rw, put it back.
     mount -o remount,ro $mroot
 
